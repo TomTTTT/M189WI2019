@@ -1,6 +1,6 @@
 #Load working directory
 #Change this to match your own directory and make sure that your data file is in your directory
-setwd("C:/Users/buwen/OneDrive/Desktop/MATH 189")
+setwd("/Users/WolfyLove/Documents/Git/M189WI2019")
 
 #Load dependencies
 
@@ -22,6 +22,7 @@ summary(df_smoker)
 df_smoker$age[df_smoker$age == 99] <- NA
 df_smoker$gestation[df_smoker$gestation == 999] <- NA
 #check gestation for 999 values
+df_smoker$race[df_smoker$race == 999] <- NA
 #check race for 999 values
 #age 99
 #ed 9
