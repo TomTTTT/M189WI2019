@@ -1,10 +1,10 @@
 #Load working directory
-#Change this to match your own directory and make sure that your data file is in your directory
-setwd("/Users/WolfyLove/Documents/Git/M189WI2019")
+#Enter your own path in the quotes in the path variable
+path<-""
+setwd(paste0(path,'Documents/Git/M189WI2019'))
+
 
 #Load dependencies
-
-#example of how to install: install.packages("ggplot2")
 library(dplyr)
 library(ggplot2)
 
