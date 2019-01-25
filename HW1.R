@@ -46,38 +46,66 @@ summary(df_nonsmoker)
 #################
 #####Smokers#####
 #################
-#Histogram of weight nonsmokers 
-s_weight<-ggplot(df_smoker, aes(wt)) + 
+#Histogram of weight
+s_weight_hist<-ggplot(df_smoker, aes(wt)) + 
   geom_histogram(bins=20) + ggtitle("Smokers") + 
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "Weight (oz.)")
 
-#Histogram of gestation smokers 
-s_gestation<-ggplot(df_smoker, aes(gestation)) + 
+#Histogram of gestation 
+s_gestation_hist<-ggplot(df_smoker, aes(gestation)) + 
   geom_histogram(bins=20) + ggtitle("Smokers") +
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "Days")
+
+#QQ plot of weight
+s_weight_qq<-ggplot(df_smoker, aes(sample = wt)) +
+  stat_qq() + stat_qq_line() + ggtitle("Smokers") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#QQ plot of gestation
+s_gestation_qq<-ggplot(df_smoker, aes(sample = gestation)) +
+  stat_qq() + stat_qq_line() + ggtitle("Smokers") +
+  theme(plot.title = element_text(hjust = 0.5)) 
 
 
 #################
 ###Nonsmokers####
 #################
-#Histogram of weight for nonsmokers
-ns_weight<-ggplot(df_nonsmoker, aes(wt)) + 
+#Histogram of weight
+ns_weight_hist<-ggplot(df_nonsmoker, aes(wt)) + 
   geom_histogram(bins=20) + ggtitle("Nonsmokers") + 
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "Weight (oz.)")
 
-#Histogram of gestation nonsmokers 
-ns_gestation<-ggplot(df_nonsmoker, aes(gestation)) + 
+#Histogram of gestation  
+ns_gestation_hist<-ggplot(df_nonsmoker, aes(gestation)) + 
   geom_histogram(bins=20) + ggtitle("Nonsmokers") + 
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "Days")
 
+#QQ plot of weight
+ns_weight_qq<-ggplot(df_nonsmoker, aes(sample = wt)) +
+  stat_qq() + stat_qq_line() + ggtitle("Nonsmokers") +
+  theme(plot.title = element_text(hjust = 0.5)) 
 
+#QQ plot of gestation
+ns_gestation_qq<-ggplot(df_nonsmoker, aes(sample = gestation)) +
+  stat_qq() + stat_qq_line() + ggtitle("Nonsmokers") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+
+#Histograms
 ##Maybe add a count legend that changes color with higher counts in the bins
 #Side by side plot of Birth weights 
-grid.arrange(s_weight, ns_weight, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=3)))
+grid.arrange(s_weight_hist, ns_weight_hist, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=3)))
 
 #Side by side plot of gestation
-grid.arrange(s_gestation, ns_gestation, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=3)))
+grid.arrange(s_gestation_hist, ns_gestation_hist, ncol=2, top = textGrob("Gestation",gp=gpar(fontsize=20,font=3)))
+
+#QQ plots
+#Side by side plot of Birth weights 
+grid.arrange(s_weight_qq, ns_weight_qq, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=3)))
+
+#Side by side plot of gestation
+grid.arrange(s_gestation_qq, ns_gestation_qq, ncol=2, top = textGrob("Gestation",gp=gpar(fontsize=20,font=3)))
