@@ -2,6 +2,7 @@
 #Enter your own path in the quotes in the path variable
 path<-"/Users/Timlee/"
 setwd(paste0(path,'Documents/Git/M189WI2019'))
+setwd("C:/Users/Aiden/Desktop/UCSD/homework/math_189/case1/M189WI2019/")
 
 
 #Load dependencies
@@ -36,10 +37,14 @@ df$inc[df$inc == 98] <-NA
 #Separate data into smokers and non smokers
 df_smoker<- df%>%filter(smoke== c(1,2,3))
 summary(df_smoker)
+summary(df_smoker$wt)
+summary(df_smoker$outcome)
 
 #Estimations for nonsmokers
 df_nonsmoker<- df%>%filter(smoke==0)
 summary(df_nonsmoker)
+summary(df_nonsmoker$wt)
+summary(df_nonsmoker$outcome)
 
 #Find a way to print publishable summary statistics tables for our desired variables
 
@@ -56,7 +61,7 @@ s_weight_hist<-ggplot(df_smoker, aes(wt)) +
 s_gestation_hist<-ggplot(df_smoker, aes(gestation)) + 
   geom_histogram(bins=20) + ggtitle("Smokers") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "Days")
+  labs(x = "Days") + xlim(200, 350)
 
 #QQ plot of weight
 s_weight_qq<-ggplot(df_smoker, aes(sample = wt)) +
@@ -82,7 +87,7 @@ ns_weight_hist<-ggplot(df_nonsmoker, aes(wt)) +
 ns_gestation_hist<-ggplot(df_nonsmoker, aes(gestation)) + 
   geom_histogram(bins=20) + ggtitle("Nonsmokers") + 
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "Days")
+  labs(x = "Days") + xlim(200, 350)
 
 #QQ plot of weight
 ns_weight_qq<-ggplot(df_nonsmoker, aes(sample = wt)) +
@@ -133,4 +138,12 @@ nonsmoker_freq_subtracted <- (nrow(df_nonsmoker %>% filter(wt < low_birth_weight
 
 
 
+##########################
+### MORTALITY DATA #######
+##########################
+data <- read.csv("linkco2012us_num.csv") # for motality
+data2 <- read.csv("linkco2012us_den.csv") # data for birth to get weight and compare with data$aged below
 
+# details on google doc
+summary(data$aged) # how long the infant survived for in days
+summary(data$BRTHWGT)
