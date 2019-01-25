@@ -1,6 +1,6 @@
 #Load working directory
 #Enter your own path in the quotes in the path variable
-path<-"C:/Users/buwen/"
+path<-"/Users/Timlee/"
 setwd(paste0(path,'Documents/Git/M189WI2019'))
 
 
@@ -34,7 +34,7 @@ df$inc[df$inc == 98] <-NA
 
 
 #Separate data into smokers and non smokers
-df_smoker<- df%>%filter(smoke==1)
+df_smoker<- df%>%filter(smoke== c(1,2,3))
 summary(df_smoker)
 
 #Estimations for nonsmokers
@@ -109,3 +109,28 @@ grid.arrange(s_weight_qq, ns_weight_qq, ncol=2, top = textGrob("Birth Weights",g
 
 #Side by side plot of gestation
 grid.arrange(s_gestation_qq, ns_gestation_qq, ncol=2, top = textGrob("Gestation",gp=gpar(fontsize=20,font=3)))
+
+
+
+##################
+### Question 3 ###
+##################
+
+#converted 2500g to ounces
+low_birth_weight <- 88.1849
+
+#get frequency of smokers
+smoker_freq <- nrow(df_smoker %>% filter(wt < low_birth_weight)) / nrow(df_smoker)
+
+#get frequency of nonsmokers
+nonsmoker_freq <- nrow(df_nonsmoker %>% filter(wt < low_birth_weight)) / nrow(df_nonsmoker)
+
+#Finding Frequencies with low-weight babies added/subtracted
+smoker_freq_addded <- (nrow(df_smoker %>% filter(wt < low_birth_weight)) + 5 )/ nrow(df_smoker)
+smoker_freq_subtracted <- (nrow(df_smoker %>% filter(wt < low_birth_weight)) - 5 )/ nrow(df_smoker)
+nonsmoker_freq_added <- (nrow(df_nonsmoker %>% filter(wt < low_birth_weight)) + 5 )/ nrow(df_nonsmoker)
+nonsmoker_freq_subtracted <- (nrow(df_nonsmoker %>% filter(wt < low_birth_weight)) - 5 )/ nrow(df_nonsmoker)
+
+
+
+
