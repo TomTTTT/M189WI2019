@@ -1,7 +1,7 @@
 #Load working directory
 #Enter your own path in the quotes in the path variable
 # path<-"/Users/Timlee/"
-# path<-"C:/Users/Aiden/Desktop/UCSD/homework/math_189/"
+# setwd("C:/Users/Aiden/Desktop/UCSD/homework/math_189/case1/M189WI2019/")
 # path<-"C:/Users/buwen/"
 setwd(paste0(path,'Documents/Git/M189WI2019'))
 
@@ -174,12 +174,9 @@ nonsmoker_freq_subtracted <- (nrow(df_nonsmoker %>% filter(wt < low_birth_weight
 # install.packages("readxl")
 library(readxl)
 
-mortality_df <- read.csv("linkco2012us_num.csv") # for motality
-# data2 <- read.csv("linkco2012us_den.csv") # data for birth to get weight and compare with data$aged below
-# biirth_df <- read.csv("babies45.xlsx")
-
+mortality_df <- read_excel("mort2012.xlsx") # for motality
 birth_df <- read_excel("babies45.xlsx")
 
 # details on google doc
-summary(data$aged) # how long the infant survived for in days
+summary(mortality_df$aged) # how long the infant survived for in days
 summary(birth_df$bwtr14)
