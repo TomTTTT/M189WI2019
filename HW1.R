@@ -141,9 +141,16 @@ nonsmoker_freq_subtracted <- (nrow(df_nonsmoker %>% filter(wt < low_birth_weight
 ##########################
 ### MORTALITY DATA #######
 ##########################
-data <- read.csv("linkco2012us_num.csv") # for motality
-data2 <- read.csv("linkco2012us_den.csv") # data for birth to get weight and compare with data$aged below
+
+# install.packages("readxl")
+library(readxl)
+
+mortality_df <- read.csv("linkco2012us_num.csv") # for motality
+# data2 <- read.csv("linkco2012us_den.csv") # data for birth to get weight and compare with data$aged below
+# biirth_df <- read.csv("babies45.xlsx")
+
+birth_df <- read_excel("babies45.xlsx")
 
 # details on google doc
 summary(data$aged) # how long the infant survived for in days
-summary(data$BRTHWGT)
+summary(birth_df$bwtr14)
