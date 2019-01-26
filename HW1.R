@@ -1,7 +1,7 @@
 #Load working directory
 #Enter your own path in the quotes in the path variable
 # path<-"/Users/Timlee/"
-# path<-"C:/Users/Aiden/"
+# path<-"C:/Users/Aiden/Desktop/UCSD/homework/math_189/"
 # path<-"C:/Users/buwen/"
 setwd(paste0(path,'Documents/Git/M189WI2019'))
 
