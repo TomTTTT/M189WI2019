@@ -12,9 +12,11 @@ library(dplyr)
 library(ggplot2)
 library(grid)
 library(gridExtra)
+library(readxl)
 
 #Load dataset
 df<-read.csv("babies23.txt", header = TRUE, sep="")
+mortality_df <- read_excel("mort2012.xlsx")
 
 ######################
 ####Data managment####
@@ -37,17 +39,22 @@ df$inc[df$inc == 98] <-NA
 df$smoke[df$smoke==9]<-NA
 
 
-#Separate data into smokers and non smokers
+# Separate data into smokers and non smokers
 df_smoker<- df%>%filter(smoke== c(1,2,3))
 summary(df_smoker)
 summary(df_smoker$wt)
 summary(df_smoker$outcome)
 
-#Estimations for nonsmokers
+# Estimations for nonsmokers
 df_nonsmoker<- df%>%filter(smoke==0)
 summary(df_nonsmoker)
 summary(df_nonsmoker$wt)
 summary(df_nonsmoker$outcome)
+
+# Data to use to see how low birth weight affects mortality
+summary(mortality_df$aged) # how long the infant survived for in days
+summary(mortality_df$bwtr14)
+
 
 #Find a way to print publishable summary statistics tables for our desired variables
 
@@ -83,6 +90,24 @@ ns_gestation_hist<-ggplot(df_nonsmoker, aes(gestation)) +
   labs(x = "Days") + xlim(200, 350)
 
 grid.arrange(s_gestation_hist, ns_gestation_hist, ncol=2, top = textGrob("Gestation",gp=gpar(fontsize=20,font=3)))
+
+# need to edit such that it will match the baby to relate weight and death.
+# aged - how long baby lived after birth
+aged_hist <- ggplot(mortality_df, aes(aged)) +
+  geom_histogram(bins = 20) + ggtitle("Age of baby") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "Days")
+
+# bwtr14 - birth weight
+ID <- 1:14
+bwtr14_hist <- ggplot(mortality_df, aes(bwtr14)) +
+  geom_histogram(bins = 14) + ggtitle("weight of baby") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous("weight range", labels = as.character(ID), breaks = ID)
+
+grid.arrange(aged_hist, bwtr14_hist, ncol = 2, top = textGrob("compaire baby weight to days survived after birth",
+                                                              gp = gpar(fontsize=20, font=3)))
+
 
 
 ###QQ plots###
@@ -128,15 +153,41 @@ grid.arrange(s_gestation_qq, ns_gestation_qq, ncol=2, top = textGrob("Gestation"
 df$smoke<-as.numeric(df$smoke)
 
 
+###################
+#### BOOTSTRAP ####
+###################
 
+# finds confidence interval
+ciBoot <- function(df, B, conf_lvl)
+{
+  mean.df = mean(df)
+  sd.df = sd(df)
+  t = numeric(B)
+  n = length(df)
+  
+  
+  for (i in 1:B)
+  {
+    boot <- sample(df, n, replace = TRUE)
+    mean.b <- mean(boot)
+    sd.b <- sd(boot)
+    t[i] <- (mean.b - mean.df)/(sd.b/sqrt(n))
+  }
+  
+  ci <- mean.df + (sd.df/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2))
+  return(ci)
+}
 
+B = 10000
+conf_lvl = 0.90   # confidence level
 
+# wt variable
+ci.smoker_wt = ciBoot(df_smoker$wt, B, conf_lvl)
+ci.nonsmoker_wt = ciBoot(df_nonsmoker$wt, B, conf_lvl)
 
-
-
-
-
-
+# gestation variable
+ci.smoker_gest = ciBoot(df_smoker$gestation, B, conf_lvl)
+ci.nonsmoker_gest = ciBoost(df_nonsmoker$gestation, B, conf_lvl)
 
 
 
@@ -174,9 +225,31 @@ nonsmoker_freq_subtracted <- (nrow(df_nonsmoker %>% filter(wt < low_birth_weight
 # install.packages("readxl")
 library(readxl)
 
-mortality_df <- read_excel("mort2012.xlsx") # for motality
-birth_df <- read_excel("babies45.xlsx")
+mortality_df <- read_excel("mort2012.xlsx")
+# birth_df <- read_excel("babies45.xlsx")
 
 # details on google doc
 summary(mortality_df$aged) # how long the infant survived for in days
-summary(birth_df$bwtr14)
+summary(mortality_df$bwtr14)
+
+
+# information about bwtr14
+# 01) 227- 499 grams 
+# 02) 500 - 749 grams 
+# 03) 750 - 999 grams 
+# 04) 1000 - 1249 grams 
+# 05) 1250 - 1499 grams 
+# 06) 1500 - 1999 grams 
+# 07) 2000 - 2499 grams 
+# 08) 2500 - 2999 grams 
+# 09) 3000 - 3499 grams 
+# 10) 3500 - 3999 grams 
+# 11) 4000 - 4499 grams 
+# 12) 4500 - 4999 grams 
+# 13) 5000 - 8165 grams 
+# 14) Not Stated
+
+
+
+
+
