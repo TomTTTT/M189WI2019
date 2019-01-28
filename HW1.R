@@ -6,6 +6,12 @@
 setwd(paste0(path,'Documents/Git/M189WI2019'))
 
 
+# # packages install
+# install.packages("dplyr")
+# install.packages("ggplot2")
+# install.packages("grid")
+# install.packages("gridExtra")
+# install.packages("readxl")
 
 #Load dependencies
 library(dplyr)
@@ -110,6 +116,10 @@ grid.arrange(aged_hist, bwtr14_hist, ncol = 2, top = textGrob("compaire baby wei
 
 
 
+
+
+
+
 ###QQ plots###
 #weight
 s_weight_qq<-ggplot(df_smoker, aes(sample = wt)) +
@@ -148,6 +158,41 @@ ggplot(df, aes(x=smoke, y=gestation)) +
   labs(x = "Smoking Status", y = "Days")
 
 grid.arrange(s_gestation_qq, ns_gestation_qq, ncol=2, top = textGrob("Gestation",gp=gpar(fontsize=20,font=3)))
+
+# smoking time
+df_smoke_during_preg <- df%>%filter(time == c(1,2))
+df_smoke_1to4yr_before_preg <- df%>%filter(time == c(3,4,5,6))
+df_smoke_been_awhile <- df%>%filter(time == c(7,8))
+
+df_smoke_during_preg$time[df_smoke_during_preg$time %in% c(1,2)] <- 1
+df_smoke_1to4yr_before_preg$time[df_smoke_1to4yr_before_preg$time %in% c(3,4,5,6)] <- 2
+df_smoke_been_awhile$time[df_smoke_been_awhile$time %in% c(7,8)] <- 3
+
+summary(df_smoke_during_preg$wt)
+summary(df_smoke_1to4yr_before_preg$wt)
+summary(df_smoke_been_awhile$wt)
+
+x <- ggplot(df_smoke_during_preg, aes(time, y = wt)) +
+  geom_boxplot() + ggtitle("Smoked during pregnancy")+
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "smoked during pregnancy", y = "Weight (oz.)") +
+  ylim(80, 180)
+
+y <- ggplot(df_smoke_1to4yr_before_preg, aes(x = time, y = wt)) +
+  geom_boxplot() + ggtitle("Smoked 1 to 4 years before pregnancy") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "smoked 1 to 4 years prior", y = "weight (oz.)") +
+  ylim(80, 180)
+
+z <- ggplot(df_smoke_been_awhile, aes(x = time, y = wt)) +
+  geom_boxplot() + ggtitle("Smoked 5+ years before pregnancy") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "smoked 5+ years prior", y = "weight (oz.)") +
+  ylim(80, 180)
+
+grid.arrange(x,y,z, ncol = 3, top = textGrob("Smoking Time", gp = gpar(fontsize=20, font=3)))
+
+
 
 #Make smoke continuous again
 df$smoke<-as.numeric(df$smoke)
@@ -189,6 +234,7 @@ ci.nonsmoker_wt = ciBoot(df_nonsmoker$wt, B, conf_lvl)
 ci.smoker_gest = ciBoot(df_smoker$gestation, B, conf_lvl)
 ci.nonsmoker_gest = ciBoost(df_nonsmoker$gestation, B, conf_lvl)
 
+# moments
 
 
 
@@ -221,17 +267,6 @@ nonsmoker_freq_subtracted <- (nrow(df_nonsmoker %>% filter(wt < low_birth_weight
 ##########################
 ### MORTALITY DATA #######
 ##########################
-
-# install.packages("readxl")
-library(readxl)
-
-mortality_df <- read_excel("mort2012.xlsx")
-# birth_df <- read_excel("babies45.xlsx")
-
-# details on google doc
-summary(mortality_df$aged) # how long the infant survived for in days
-summary(mortality_df$bwtr14)
-
 
 # information about bwtr14
 # 01) 227- 499 grams 
