@@ -46,6 +46,7 @@ df$dht[df$dht == 99] <-NA
 df$dwt[df$dwt == 999] <-NA
 df$inc[df$inc == 98] <-NA
 df$smoke[df$smoke==9]<-NA
+df$time[df$time==98]<-NA
 
 #Create indicator for smoking mothers; 1 = smoke, 0 else 
 df<- df%>%mutate(smoke_binary = ifelse(smoke==c(1,2,3), 1, 0))
@@ -103,7 +104,6 @@ ggplot(data=subset(df, !is.na(smoke_binary)), aes(x=wt, fill=smoke_binary)) +
   geom_histogram(aes(y = ..density..),binwidth=5, alpha=.5, position="identity") +
   geom_vline(data=cdf, aes(xintercept=wt.mean,  colour=smoke_binary),
              linetype="dashed", size=1)+ ggtitle("Birth Weights") + 
-  geom_density(alpha=0.3, fill="red") +
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "Weight (oz.)") 
 
