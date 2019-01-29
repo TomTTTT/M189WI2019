@@ -25,7 +25,7 @@ library(moments)
 
 #Load dataset
 df<-read.csv("babies23.txt", header = TRUE, sep="")
-
+mortality_df <- read_excel('mort2012.xlsx')
 
 ######################
 ####Data managment####
@@ -75,7 +75,7 @@ for(i in 1:numNonSmokers){
   if(df_nonsmoker$wt[i]<88.1){ numUnderweightNonSmokers= numUnderweightNonSmokers+1}
 }
 
-numHealthyWeightSmokers = numSmokers- numUnderweightSmokers
+numHealthyWeightSmokers = numSmokers - numUnderweightSmokers
 numHealthyWeightNonSmokers = numNonSmokers- numUnderweightNonSmokers
 
 
@@ -342,6 +342,28 @@ chisq.test(testingTable)
 # 14) Not Stated
 
 
+## Data manipulation to find frequencies of mortality data ##
+age_weight_df <- mortality_df %>% select(aged, bwtr14)
+
+early_death_df <- age_weight_df %>% filter(aged < 28) %>%
+  group_by(bwtr14) %>%
+  summarise(n2 = n()) %>%
+  ungroup()
+
+all_death_df <- age_weight_df %>% 
+                group_by(bwtr14) %>%
+                summarise(n1 = n()) %>%
+                ungroup()
 
 
+## Two Proportion Z - Test ##
+prop.test(c(nrow(df_smoker %>% filter(wt < low_birth_weight)), nrow(df_nonsmoker %>% filter(wt < low_birth_weight))),
+          c(nrow(df_smoker), nrow(df_nonsmoker)), alternative = "greater",
+          conf.level = .95)
 
+## Frequency of Weights ##
+frequency_df <- early_death_df %>% merge(all_death_df, by = "bwtr14") %>% 
+                  mutate(frequency = n2/n1)
+
+## Plot of Frequency of Babies mortality < 28) 
+ggplot(frequency_df, aes(bwtr14, frequency)) + geom_bar(stat = "identity")
