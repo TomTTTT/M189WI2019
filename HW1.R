@@ -22,7 +22,7 @@ library(readxl)
 
 #Load dataset
 df<-read.csv("babies23.txt", header = TRUE, sep="")
-#mortality_df <- read_excel("mort2012.xlsx")
+
 
 ######################
 ####Data managment####
@@ -44,6 +44,8 @@ df$dwt[df$dwt == 999] <-NA
 df$inc[df$inc == 98] <-NA
 df$smoke[df$smoke==9]<-NA
 
+#Create indicator for smoking mothers; 1 = smoke, 0 else 
+df<- df%>%mutate(smoke_binary = ifelse(smoke==c(1,2,3), 1, 0))
 
 # Separate data into smokers and non smokers
 df_smoker<- df%>%filter(smoke== c(1,2,3))
@@ -57,9 +59,7 @@ summary(df_nonsmoker)
 summary(df_nonsmoker$wt)
 summary(df_nonsmoker$outcome)
 
-# Data to use to see how low birth weight affects mortality
-summary(mortality_df$aged) # how long the infant survived for in days
-summary(mortality_df$bwtr14)
+
 
 
 #Find a way to print publishable summary statistics tables for our desired variables
@@ -83,7 +83,7 @@ ns_weight_hist<-ggplot(df_nonsmoker, aes(wt)) +
 #Try overlaying histograms 
 df$smoke_binary<-factor(df$smoke_binary)
 # Find the mean of each group
-library
+library(plyr)
 df$smoke_binary<-factor(df$smoke_binary)
 cdf <- ddply(df, "smoke_binary", summarise, wt.mean=mean(wt, na.rm=T))
 cdf<-cdf[-3,]
@@ -112,22 +112,22 @@ ns_gestation_hist<-ggplot(df_nonsmoker, aes(gestation)) +
 
 grid.arrange(s_gestation_hist, ns_gestation_hist, ncol=2, top = textGrob("Gestation",gp=gpar(fontsize=20,font=3)))
 
-# need to edit such that it will match the baby to relate weight and death.
-# aged - how long baby lived after birth
-aged_hist <- ggplot(mortality_df, aes(aged)) +
-  geom_histogram(bins = 20) + ggtitle("Age of baby") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "Days")
-
-# bwtr14 - birth weight
-ID <- 1:14
-bwtr14_hist <- ggplot(mortality_df, aes(bwtr14)) +
-  geom_histogram(bins = 14) + ggtitle("weight of baby") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  scale_x_continuous("weight range", labels = as.character(ID), breaks = ID)
-
-grid.arrange(aged_hist, bwtr14_hist, ncol = 2, top = textGrob("compaire baby weight to days survived after birth",
-                                                              gp = gpar(fontsize=20, font=3)))
+# # need to edit such that it will match the baby to relate weight and death.
+# # aged - how long baby lived after birth
+# aged_hist <- ggplot(mortality_df, aes(aged)) +
+#   geom_histogram(bins = 20) + ggtitle("Age of baby") +
+#   theme(plot.title = element_text(hjust = 0.5)) +
+#   labs(x = "Days")
+# 
+# # bwtr14 - birth weight
+# ID <- 1:14
+# bwtr14_hist <- ggplot(mortality_df, aes(bwtr14)) +
+#   geom_histogram(bins = 14) + ggtitle("weight of baby") +
+#   theme(plot.title = element_text(hjust = 0.5)) +
+#   scale_x_continuous("weight range", labels = as.character(ID), breaks = ID)
+# 
+# grid.arrange(aged_hist, bwtr14_hist, ncol = 2, top = textGrob("compaire baby weight to days survived after birth",
+#                                                               gp = gpar(fontsize=20, font=3)))
 
 
 
