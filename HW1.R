@@ -63,6 +63,22 @@ summary(df_nonsmoker)
 summary(df_nonsmoker$wt)
 summary(df_nonsmoker$outcome)
 
+##some variables might be usefull
+numSmokers= length(df_smoker$id)
+numNonSmokers= length(df_nonsmoker$id)
+numUnderweightSmokers = 0
+for(i in 1:numSmokers){
+  if (df_smoker$wt[i]< 88.1){ numUnderweightSmokers= numUnderweightSmokers+1}
+}
+numUnderweightNonSmokers = 0
+for(i in 1:numNonSmokers){
+  if(df_nonsmoker$wt[i]<88.1){ numUnderweightNonSmokers= numUnderweightNonSmokers+1}
+}
+
+numHealthyWeightSmokers = numSmokers- numUnderweightSmokers
+numHealthyWeightNonSmokers = numNonSmokers- numUnderweightNonSmokers
+
+
 # kurtosis of normal = 3
 kurtosis(rnorm(1000))
 kurtosis(df_smoker)
@@ -290,6 +306,19 @@ smoker_freq_subtracted <- (nrow(df_smoker %>% filter(wt < low_birth_weight)) - 5
 nonsmoker_freq_added <- (nrow(df_nonsmoker %>% filter(wt < low_birth_weight)) + 5 )/ nrow(df_nonsmoker)
 nonsmoker_freq_subtracted <- (nrow(df_nonsmoker %>% filter(wt < low_birth_weight)) - 5 )/ nrow(df_nonsmoker)
 
+#########################
+####Testting for independence of smoking and nonsmoking on difference in probability of early bith####
+#########################
+
+testingTable = matrix(ncol=2,nrow =2)
+  
+testingTable[1,1]= numUnderweightNonSmokers
+testingTable[1,2]= numUnderweightSmokers
+testingTable[2,1]= numHealthyWeightNonSmokers
+testingTable[2,2]= numHealthyWeightSmokers
+
+
+chisq.test(testingTable)
 
 
 ##########################
