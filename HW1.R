@@ -22,7 +22,7 @@ library(readxl)
 
 #Load dataset
 df<-read.csv("babies23.txt", header = TRUE, sep="")
-mortality_df <- read_excel("mort2012.xlsx")
+#mortality_df <- read_excel("mort2012.xlsx")
 
 ######################
 ####Data managment####
@@ -79,6 +79,21 @@ ns_weight_hist<-ggplot(df_nonsmoker, aes(wt)) +
   geom_histogram(bins=20) + ggtitle("Nonsmokers") + 
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "Weight (oz.)") + xlim(50, 180)
+
+#Try overlaying histograms 
+df$smoke_binary<-factor(df$smoke_binary)
+# Find the mean of each group
+library
+df$smoke_binary<-factor(df$smoke_binary)
+cdf <- ddply(df, "smoke_binary", summarise, wt.mean=mean(wt, na.rm=T))
+cdf<-cdf[-3,]
+
+ggplot(data=subset(df, !is.na(smoke_binary)), aes(x=wt, fill=smoke_binary)) +
+  geom_histogram(binwidth=5, alpha=.5, position="identity") +
+  geom_vline(data=cdf, aes(xintercept=wt.mean,  colour=smoke_binary),
+             linetype="dashed", size=1)+ ggtitle("Birth Weights") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "Weight (oz.)") 
 
 #Maybe add a count legend that changes color with higher counts in the bins
 #Side by side plot of Birth weights 
@@ -246,6 +261,12 @@ ci.nonsmoker_gest = ciBoost(df_nonsmoker$gestation, B, conf_lvl)
 ##################
 ### Question 3 ###
 ##################
+
+#converted 2500g to ounces
+low_birth_weight <- 88.1849
+
+#Create indicator for low birth weight; 1 = low, 0 else 
+df<- df%>%mutate(low_birth_weight = ifelse(wt<low_birth_weight, 1, 0))
 
 #converted 2500g to ounces
 low_birth_weight <- 88.1849
