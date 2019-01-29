@@ -12,6 +12,8 @@ setwd(paste0(path,'Documents/Git/M189WI2019'))
 # install.packages("grid")
 # install.packages("gridExtra")
 # install.packages("readxl")
+# install.packages("moments")
+
 
 #Load dependencies
 library(dplyr)
@@ -19,6 +21,7 @@ library(ggplot2)
 library(grid)
 library(gridExtra)
 library(readxl)
+library(moments)
 
 #Load dataset
 df<-read.csv("babies23.txt", header = TRUE, sep="")
@@ -59,7 +62,15 @@ summary(df_nonsmoker)
 summary(df_nonsmoker$wt)
 summary(df_nonsmoker$outcome)
 
+# kurtosis of normal = 3
+kurtosis(rnorm(1000))
+kurtosis(df_smoker)
+kurtosis(df_nonsmoker)
 
+# skewness of normal = 0
+skewness(rnorm(1000))
+skewness(df_smoker)
+skewness(df_nonsmoker)
 
 
 #Find a way to print publishable summary statistics tables for our desired variables
@@ -89,9 +100,10 @@ cdf <- ddply(df, "smoke_binary", summarise, wt.mean=mean(wt, na.rm=T))
 cdf<-cdf[-3,]
 
 ggplot(data=subset(df, !is.na(smoke_binary)), aes(x=wt, fill=smoke_binary)) +
-  geom_histogram(binwidth=5, alpha=.5, position="identity") +
+  geom_histogram(aes(y = ..density..),binwidth=5, alpha=.5, position="identity") +
   geom_vline(data=cdf, aes(xintercept=wt.mean,  colour=smoke_binary),
              linetype="dashed", size=1)+ ggtitle("Birth Weights") + 
+  geom_density(alpha=0.3, fill="red") +
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "Weight (oz.)") 
 
@@ -112,22 +124,17 @@ ns_gestation_hist<-ggplot(df_nonsmoker, aes(gestation)) +
 
 grid.arrange(s_gestation_hist, ns_gestation_hist, ncol=2, top = textGrob("Gestation",gp=gpar(fontsize=20,font=3)))
 
-# # need to edit such that it will match the baby to relate weight and death.
-# # aged - how long baby lived after birth
-# aged_hist <- ggplot(mortality_df, aes(aged)) +
-#   geom_histogram(bins = 20) + ggtitle("Age of baby") +
-#   theme(plot.title = element_text(hjust = 0.5)) +
-#   labs(x = "Days")
-# 
-# # bwtr14 - birth weight
-# ID <- 1:14
-# bwtr14_hist <- ggplot(mortality_df, aes(bwtr14)) +
-#   geom_histogram(bins = 14) + ggtitle("weight of baby") +
-#   theme(plot.title = element_text(hjust = 0.5)) +
-#   scale_x_continuous("weight range", labels = as.character(ID), breaks = ID)
-# 
-# grid.arrange(aged_hist, bwtr14_hist, ncol = 2, top = textGrob("compaire baby weight to days survived after birth",
-#                                                               gp = gpar(fontsize=20, font=3)))
+#Try overlaying histograms 
+# Find the mean of each group
+gdf <- ddply(df, "smoke_binary", summarise, gestation.mean=mean(gestation, na.rm=T))
+gdf<-gdf[-3,]
+
+ggplot(data=subset(df, !is.na(smoke_binary)), aes(x=gestation, fill=smoke_binary)) +
+  geom_histogram(aes(y = ..density..),binwidth=5, alpha=.5, position="identity") +
+  geom_vline(data=gdf, aes(xintercept=gestation.mean,  colour=smoke_binary),
+             linetype="dashed", size=1)+ ggtitle("Gestation") + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "Weight (oz.)") 
 
 
 
