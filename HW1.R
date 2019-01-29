@@ -319,7 +319,7 @@ testingTable[2,2]= numHealthyWeightSmokers
 
 
 chisq.test(testingTable)
-
+#very low p-value there is a dependency in smoking and low baby birth weights
 
 ##########################
 ### MORTALITY DATA #######
