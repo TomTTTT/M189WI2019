@@ -366,6 +366,19 @@ testingTable[2,2]= numHealthyWeightSmokers
 chisq.test(testingTable)
 #very low p-value there is a dependency in smoking and low baby birth weights
 
+######################################
+###Plots gestation v birthweight######
+###T test for mean diff in gestation##
+######################################
+plot(df_nonsmoker$gestation,df_nonsmoker$wt)
+plot(df_smoker$gestation, df_smoker$wt)
+
+meanGestationSmoker = mean(df_smoker$gestation, na.rm = TRUE)
+meanGestationNonSmoker = mean(df_nonsmoker$gestation, na.rm = TRUE)
+t.test(df_nonsmoker$gestation, df_smoker$gestation, alternative = "two.sided", var.equal = FALSE)
+#T test shows the mean gestation period is the same so the low baby birthweights is not 
+#a result of premature babies
+
 ##########################
 ### MORTALITY DATA #######
 ##########################
