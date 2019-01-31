@@ -18,6 +18,7 @@ setwd(paste0(path,'Documents/Git/M189WI2019'))
 #Load dependencies
 library(dplyr)
 library(ggplot2)
+library(ggsci)
 library(grid)
 library(gridExtra)
 library(readxl)
@@ -80,11 +81,13 @@ numHealthyWeightNonSmokers = numNonSmokers- numUnderweightNonSmokers
 
 
 # kurtosis of normal = 3
+set.seed(1)
 kurtosis(rnorm(1000))
 kurtosis(df_smoker)
 kurtosis(df_nonsmoker)
 
 # skewness of normal = 0
+set.seed(1)
 skewness(rnorm(1000))
 skewness(df_smoker)
 skewness(df_nonsmoker)
@@ -150,7 +153,7 @@ ggplot(data=subset(df, !is.na(smoke_binary)), aes(x=gestation, fill=smoke_binary
   geom_vline(data=gdf, aes(xintercept=gestation.mean,  colour=smoke_binary),
              linetype="dashed", size=1)+ ggtitle("Gestation") + 
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "Weight (oz.)") 
+  labs(x = "Weight (oz.)") + ####################
 
 
 
@@ -259,9 +262,10 @@ ciBoot <- function(df, B, conf_lvl)
     t[i] <- (mean.b - mean.df)/(sd.b/sqrt(n))
   }
   
-  ci <- mean.df + (sd.df/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2), na.rm = TRUE)
+  ci <- mean.df  + (sd.df/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2), na.rm = TRUE)
   return(ci)
 }
+
 
 B <- 10000
 conf_lvl <- 0.90   # confidence level
@@ -279,6 +283,8 @@ ci.nonsmoker_wt
 
 ci.smoker_gest
 ci.nonsmoker_gest
+
+
 
 #######################
 ##### MONTE CARLO #####
@@ -322,8 +328,6 @@ mc.nonsmoker_wt
 
 mc.smoker_gest
 mc.nonsmoker_gest
-
-
 
 
 ##################
