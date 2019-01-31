@@ -242,7 +242,7 @@ df$smoke<-as.numeric(df$smoke)
 ###################
 #### BOOTSTRAP ####
 ###################
-
+set.seed(70)
 # finds confidence interval
 ciBoot <- function(df, B, conf_lvl)
 {
