@@ -243,8 +243,8 @@ df$smoke<-as.numeric(df$smoke)
 # finds confidence interval
 ciBoot <- function(df, B, conf_lvl)
 {
-  mean.df = mean(df)
-  sd.df = sd(df)
+  mean.df = mean(df, na.rm = TRUE)
+  sd.df = sd(df, na.rm = TRUE)
   t = numeric(B)
   n = length(df)
   
@@ -254,29 +254,74 @@ ciBoot <- function(df, B, conf_lvl)
     boot <- sample(df, n, replace = TRUE)
     mean.b <- mean(boot)
     sd.b <- sd(boot)
+    
+    # t-test statistic
     t[i] <- (mean.b - mean.df)/(sd.b/sqrt(n))
   }
   
-  ci <- mean.df + (sd.df/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2))
+  ci <- mean.df + (sd.df/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2), na.rm = TRUE)
   return(ci)
 }
 
-B = 10000
-conf_lvl = 0.90   # confidence level
+B <- 10000
+conf_lvl <- 0.90   # confidence level
 
 # wt variable
-ci.smoker_wt = ciBoot(df_smoker$wt, B, conf_lvl)
-ci.nonsmoker_wt = ciBoot(df_nonsmoker$wt, B, conf_lvl)
+ci.smoker_wt <- ciBoot(df_smoker$wt, B, conf_lvl)
+ci.nonsmoker_wt <- ciBoot(df_nonsmoker$wt, B, conf_lvl)
 
 # gestation variable
-ci.smoker_gest = ciBoot(df_smoker$gestation, B, conf_lvl)
-ci.nonsmoker_gest = ciBoost(df_nonsmoker$gestation, B, conf_lvl)
+ci.smoker_gest <- ciBoot(df_smoker$gestation, B, conf_lvl)
+ci.nonsmoker_gest <- ciBoot(df_nonsmoker$gestation, B, conf_lvl)
 
-# moments
+ci.smoker_wt
+ci.nonsmoker_wt
 
+ci.smoker_gest
+ci.nonsmoker_gest
 
+#######################
+##### MONTE CARLO #####
+#######################
 
+mc <- function(df, B, conf_lvl, mu, sigma)
+{
+  mean.df <- mean(df, na.rm = TRUE)
+  sd.df <- sd(df, na.rm = TRUE)
+  t <- numeric(B)
+  n <- length(df)
+  
+  for(i in 1:B)
+  {
+    boot <- rnorm(n, mu, sigma)
+    mean.mc <- mean(boot)
+    sd.mc <- sd(boot)
+    
+    # t-test statistic
+    t[i] <- (mean.mc - mean.df)/(sd.mc/sqrt(n))
+  }
+  
+  ci <- mean.df + (sd.df/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2), na.rm = TRUE)
+  return(ci)
+}
 
+B <- 10000
+conf_lvl <- 0.90
+
+# HAVE TO CHANGE THE RNORM VALUES SINCE THE DATA ISN'T STANDARD NORMAL
+# wt
+mc.smoker_wt <- mc(df_smoker$wt, B, conf_lvl, 0, 1)
+mc.nonsmoker_wt <- mc(df_nonsmoker$wt, B, conf_lvl, 0, 1)
+
+# gestation
+mc.smoker_gest <- mc(df_smoker$gestation, B, conf_lvl, 0, 1)
+mc.nonsmoker_gest <- mc(df_nonsmoker$gestation, B, conf_lvl, 0, 1)
+
+mc.smoker_wt
+mc.nonsmoker_wt
+
+mc.smoker_gest
+mc.nonsmoker_gest
 
 
 
