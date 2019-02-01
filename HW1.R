@@ -50,7 +50,8 @@ df$smoke[df$smoke==9]<-NA
 df$time[df$time==98]<-NA
 
 #Create indicator for smoking mothers; 1 = smoke, 0 else 
-df<- df%>%mutate(smoke_binary = ifelse(smoke == c(1,2,3), 1, 0))
+df<- df%>%mutate(smoke_binary = ifelse(smoke == 1 | smoke == 2 |smoke == 3
+                                       , 1, 0))
 
 
 # Separate data into smokers and non smokers
@@ -438,3 +439,4 @@ ggplot(frequency_df, aes(bwtr14, frequency)) + geom_bar(stat = "identity")
 
 # of babies that died before 28
 #total of 
+
