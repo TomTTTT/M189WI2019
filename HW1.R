@@ -1,6 +1,6 @@
 #Load working directory
 #Enter your own path in the quotes in the path variable
-# path<-"/Users/Timlee/"
+#path<-"/Users/Timlee/"
 # setwd("C:/Users/Aiden/Desktop/UCSD/homework/math_189/case1/M189WI2019/")
 # path<-"C:/Users/buwen/"
 setwd(paste0(path,'Documents/Git/M189WI2019'))
@@ -50,16 +50,17 @@ df$smoke[df$smoke==9]<-NA
 df$time[df$time==98]<-NA
 
 #Create indicator for smoking mothers; 1 = smoke, 0 else 
-df<- df%>%mutate(smoke_binary = ifelse(smoke==c(1,2,3), 1, 0))
+df<- df%>%mutate(smoke_binary = ifelse(smoke == c(1,2,3), 1, 0))
+
 
 # Separate data into smokers and non smokers
-df_smoker<- df%>%filter(smoke== c(1,2,3))
+df_smoker<- df%>%filter(smoke_binary == 1)
 summary(df_smoker)
 summary(df_smoker$wt)
 summary(df_smoker$outcome)
 
 # Estimations for nonsmokers
-df_nonsmoker<- df%>%filter(smoke==0)
+df_nonsmoker<- df%>%filter(smoke_binary ==0)
 summary(df_nonsmoker)
 summary(df_nonsmoker$wt)
 summary(df_nonsmoker$outcome)
@@ -110,6 +111,7 @@ ns_weight_hist<-ggplot(df_nonsmoker, aes(wt)) +
   geom_histogram(bins=20) + ggtitle("Nonsmokers") + 
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "Weight (oz.)") + xlim(50, 180)
+
 
 #Try overlaying histograms 
 df$smoke_binary<-factor(df$smoke_binary)
@@ -407,16 +409,19 @@ t.test(df_nonsmoker$gestation, df_smoker$gestation, alternative = "two.sided", v
 ## Data manipulation to find frequencies of mortality data ##
 age_weight_df <- mortality_df %>% select(aged, bwtr14)
 
+age_weight_df$bwtr14[age_weight_df$bwtr14 == 14] <- NA
+
 early_death_df <- age_weight_df %>% filter(aged < 28) %>%
   group_by(bwtr14) %>%
   summarise(n2 = n()) %>%
   ungroup()
 
+
+
 all_death_df <- age_weight_df %>% 
                 group_by(bwtr14) %>%
                 summarise(n1 = n()) %>%
                 ungroup()
-
 
 ## Two Proportion Z - Test ##
 prop.test(c(nrow(df_smoker %>% filter(wt < low_birth_weight)), nrow(df_nonsmoker %>% filter(wt < low_birth_weight))),
@@ -425,7 +430,11 @@ prop.test(c(nrow(df_smoker %>% filter(wt < low_birth_weight)), nrow(df_nonsmoker
 
 ## Frequency of Weights ##
 frequency_df <- early_death_df %>% merge(all_death_df, by = "bwtr14") %>% 
-                  mutate(frequency = n2/n1)
+                  mutate(frequency = n2/n1) 
 
 ## Plot of Frequency of Babies mortality < 28) 
 ggplot(frequency_df, aes(bwtr14, frequency)) + geom_bar(stat = "identity")
+
+
+# of babies that died before 28
+#total of 
