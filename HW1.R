@@ -437,6 +437,10 @@ frequency_df <- early_death_df %>% merge(all_death_df, by = "bwtr14") %>%
 ggplot(frequency_df, aes(bwtr14, frequency)) + geom_bar(stat = "identity")
 
 
+
+#difference in weight of mothers smokers and nonsmokers
+t.test(df_smoker$wt.1,df_nonsmoker$wt.1)
+
 # of babies that died before 28
 #total of 
 
