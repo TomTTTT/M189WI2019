@@ -49,6 +49,8 @@ df$inc[df$inc == 98] <-NA
 df$smoke[df$smoke==9]<-NA
 df$time[df$time==98]<-NA
 
+df<- df%>%filter(!is.na(smoke)) %>% filter(!is.na(gestation))
+
 #Create indicator for smoking mothers; 1 = smoke, 0 else 
 df<- df%>%mutate(smoke_binary = ifelse(smoke == 1 | smoke == 2 |smoke == 3
                                        , 1, 0))
@@ -124,11 +126,16 @@ cdf<-cdf[-3,]
 
 ggplot(data=subset(df, !is.na(smoke_binary)), aes(x=wt, fill=smoke_binary)) +
   geom_histogram(aes(y = ..density..),binwidth=5, alpha=.5, position="identity") +
-  geom_vline(data=cdf, aes(xintercept=wt.mean,  colour=smoke_binary),
-             linetype="dashed", size=1)+ ggtitle("Birth Weights") + 
+  geom_vline(data=cdf, aes(xintercept=wt.mean), color = c("red","blue"), 
+             linetype="dashed", size=1)+ 
+  ggtitle("Birth Weights") + 
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "Weight (oz.)") 
-
+  labs(x = "Weight (oz.)")  +
+  scale_fill_discrete(name = "Smoke Classification", 
+                      breaks = c(0,1),
+                      labels = c("Non Smoker", "Smoker")) +
+  annotate("text", x = 95, y = .03, label = "116.9", color = "blue") +
+  annotate("text", x = 145, y = .03, label = "127.6", color = "red")
 #Maybe add a count legend that changes color with higher counts in the bins
 #Side by side plot of Birth weights 
 grid.arrange(s_weight_hist, ns_weight_hist, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=3)))
@@ -153,10 +160,13 @@ gdf<-gdf[-3,]
 
 ggplot(data=subset(df, !is.na(smoke_binary)), aes(x=gestation, fill=smoke_binary)) +
   geom_histogram(aes(y = ..density..),binwidth=5, alpha=.5, position="identity") +
-  geom_vline(data=gdf, aes(xintercept=gestation.mean,  colour=smoke_binary),
-             linetype="dashed", size=1)+ ggtitle("Gestation") + 
+  geom_vline(data=gdf, aes(xintercept=gestation.mean),color=c("blue", "red"),
+             linetype="dashed", size=1, alpha = .5)+ ggtitle("Gestation") + 
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "Weight (oz.)") + ####################
+  labs(x = "Gestation (Days)")  +
+  scale_fill_discrete(name = "Smoke Classification", 
+                      breaks = c(0,1),
+                      labels = c("Non Smoker", "Smoker"))
 
 
 
@@ -168,13 +178,15 @@ ggplot(data=subset(df, !is.na(smoke_binary)), aes(x=gestation, fill=smoke_binary
 #weight
 s_weight_qq<-ggplot(df_smoker, aes(sample = wt)) +
   stat_qq() + stat_qq_line() + ggtitle("Smokers") +
+  labs(y= "Birth Weight Quantile", x = "Theoretical Quantile") +
   theme(plot.title = element_text(hjust = 0.5)) 
 
 ns_weight_qq<-ggplot(df_nonsmoker, aes(sample = wt)) +
+  labs(y= "Birth Weight Quantile", x = "Theoretical Quantile") +
   stat_qq() + stat_qq_line() + ggtitle("Nonsmokers") +
   theme(plot.title = element_text(hjust = 0.5)) 
 
-grid.arrange(s_weight_qq, ns_weight_qq, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=3)))
+grid.arrange(s_weight_qq, ns_weight_qq, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=1)))
 
 #gestation
 s_gestation_qq<-ggplot(df_smoker, aes(sample = gestation)) +
@@ -194,12 +206,12 @@ df$smoke<-factor(df$smoke)
 ggplot(df, aes(x=smoke, y=wt)) + 
   geom_boxplot() + ggtitle("Birth Weight") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "Smoking Status", y = "Weight (oz.)")
+  labs(x = "Smoking Classification", y = "Weight (oz.)")
 
 ggplot(df, aes(x=smoke, y=gestation)) + 
   geom_boxplot() + ggtitle("Gestation time") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "Smoking Status", y = "Days")
+  labs(x = "Smoking Classification", y = "Days")
 
 grid.arrange(s_gestation_qq, ns_gestation_qq, ncol=2, top = textGrob("Gestation",gp=gpar(fontsize=20,font=3)))
 
