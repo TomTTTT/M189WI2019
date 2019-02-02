@@ -440,6 +440,8 @@ all_death_df <- age_weight_df %>%
 prop.test(c(nrow(df_smoker %>% filter(wt < low_birth_weight)), nrow(df_nonsmoker %>% filter(wt < low_birth_weight))),
           c(nrow(df_smoker), nrow(df_nonsmoker)), alternative = "greater",
           conf.level = .95)
+## Two sample t test for diff in means smoker and nonsmoker##
+t.test(df_smoker$wt,df_nonsmoker$wt, alternative = "less")
 
 ## Frequency of Weights ##
 frequency_df <- early_death_df %>% merge(all_death_df, by = "bwtr14") %>% 
