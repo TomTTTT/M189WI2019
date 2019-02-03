@@ -176,15 +176,15 @@ ggplot(data=subset(df, !is.na(smoke_binary)), aes(x=gestation, fill=smoke_binary
 
 ###QQ plots###
 #weight
-s_weight_qq<-ggplot(df_smoker, aes(sample = wt)) +
+s_weight_qq<-ggplot(df_smoker, aes(sample = wt, alpha = 0.2)) +
   stat_qq() + stat_qq_line() + ggtitle("Smokers") +
   labs(y= "Birth Weight Quantile", x = "Theoretical Quantile") +
-  theme(plot.title = element_text(hjust = 0.5)) 
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "none") 
 
-ns_weight_qq<-ggplot(df_nonsmoker, aes(sample = wt)) +
+ns_weight_qq<-ggplot(df_nonsmoker, aes(sample = wt, alpha = 0.2)) +
   labs(y= "Birth Weight Quantile", x = "Theoretical Quantile") +
   stat_qq() + stat_qq_line() + ggtitle("Nonsmokers") +
-  theme(plot.title = element_text(hjust = 0.5)) 
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "none") 
 
 grid.arrange(s_weight_qq, ns_weight_qq, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=1)))
 
@@ -193,7 +193,7 @@ s_gestation_qq<-ggplot(df_smoker, aes(sample = gestation)) +
   stat_qq() + stat_qq_line() + ggtitle("Smokers") +
   theme(plot.title = element_text(hjust = 0.5)) 
 
-ns_gestation_qq<-ggplot(df_nonsmoker, aes(sample = gestation)) +
+ns_gestation_qq<-ggplot(df_nonsmoker, aes(sample = gestation), alpha = 0.5) +
   stat_qq() + stat_qq_line() + ggtitle("Nonsmokers") +
   theme(plot.title = element_text(hjust = 0.5)) 
 
@@ -451,12 +451,37 @@ prop.test(c(nrow(df_smoker %>% filter(wt < low_birth_weight)), nrow(df_nonsmoker
 
 ## Frequency of Weights ##
 frequency_df <- early_death_df %>% merge(all_death_df, by = "bwtr14") %>% 
-                  mutate(frequency = n2/n1) 
+                  mutate(frequency = n2/n1) %>% 
+                  mutate(underweight = ifelse(bwtr14 < 7, "1","0"))
 
 ## Plot of Frequency of Babies mortality < 28) 
-ggplot(frequency_df, aes(bwtr14, frequency)) + geom_bar(stat = "identity")
+ggplot(frequency_df, aes(bwtr14, frequency, fill = underweight)) + 
+  geom_bar(stat = "identity", alpha = 0.5) + 
+  ggtitle("Mortality Frequency") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x = "Weight Classification (grams)", y = "Frequency") +
+  geom_hline(yintercept = .5) +
+  scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,11,12,13),
+                   labels = c("227 - 499",
+                              "500 - 749",
+                              "750 - 999",
+                              "1000 - 1249",
+                              "1250 - 1499",
+                              "1500 - 1999",
+                              "2000 - 2499",
+                              "2500 - 2999",
+                              "3000 - 3499",
+                              "3500 - 3999",
+                              "4000 - 4499",
+                              "4500 - 4999",
+                              "5000 - 8165")) + 
+  theme(axis.text.x = element_text(face="bold", color="black", size=6.5, angle=50)) +
+  scale_fill_manual(name = "Weight Cutoff", breaks = c("0","1"), labels = c("Healthy Weight", "Underweight"),
+                    values = c("blue","red"))
 
-
+scale_fill_discrete(name = "Smoke Classification", 
+                    breaks = c(0,1),
+                    labels = c("Non Smoker", "Smoker"))
 
 #difference in weight of mothers smokers and nonsmokers
 t.test(df_smoker$wt,df_nonsmoker$wt, alternative = "less")
