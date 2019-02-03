@@ -312,17 +312,24 @@ mc <- function(df, B, conf_lvl, mu, sigma)
   t <- numeric(B)
   n <- length(df)
   
-  for(i in 1:B) 
+  
+  # changing it to standard normal
+  stn.df = (df - mean.df)/(sd.df)
+  mean.stn.df <- mean(stn.df, na.rm = TRUE)
+  sd.stn.df <- sd(stn.df, na.rm = TRUE)
+  
+  
+  for(i in 1:B)
   {
     boot <- rnorm(n, mu, sigma)
-    mean.mc <- mean(boot)
-    sd.mc <- sd(boot)
+    mean.mc <- mean(boot, na.rm = TRUE)
+    sd.mc <- sd(boot, na.rm = TRUE)
     
     # t-test statistic
-    t[i] <- (mean.mc - mean.df)/(sd.mc/sqrt(n))
+    t[i] <- (mean.mc - mean.stn.df)/(sd.mc/sqrt(n))
   }
   
-  ci <- mean.df + (sd.df/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2), na.rm = TRUE)
+  ci <- mean.stn.df + (sd.stn.df/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2), na.rm = TRUE)
   return(ci)
 }
 
@@ -452,7 +459,7 @@ ggplot(frequency_df, aes(bwtr14, frequency)) + geom_bar(stat = "identity")
 
 
 #difference in weight of mothers smokers and nonsmokers
-t.test(df_smoker$wt.1,df_nonsmoker$wt.1)
+t.test(df_smoker$wt,df_nonsmoker$wt, alternative = "less")
 
 # of babies that died before 28
 #total of 
