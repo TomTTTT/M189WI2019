@@ -239,15 +239,15 @@ x <- ggplot(df_smoke_during_preg, aes(time, y = wt)) +
   ylim(80, 180)
 
 y <- ggplot(df_smoke_1to4yr_before_preg, aes(x = time, y = wt)) +
-  geom_boxplot() + ggtitle("Smoked 1 to 4 years before pregnancy") +
+  geom_boxplot() + ggtitle("Smoked 0 to 3 years before birth")+
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "smoked 1 to 4 years prior", y = "weight (oz.)") +
+  labs(x = "quit smoking 1 to 4 years before birth", y = "Weight (oz.)") +
   ylim(80, 180)
 
 z <- ggplot(df_smoke_been_awhile, aes(x = time, y = wt)) +
-  geom_boxplot() + ggtitle("Smoked 5+ years before pregnancy") +
+  geom_boxplot() + ggtitle("Smoked 4+ years before birth") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x = "smoked 5+ years prior", y = "weight (oz.)") +
+  labs(x = "quit smoking 5+ years before birth", y = "Weight (oz.)") +
   ylim(80, 180)
 
 grid.arrange(x,y,z, ncol = 3, top = textGrob("Smoking Time", gp = gpar(fontsize=20, font=3)))
@@ -485,8 +485,6 @@ scale_fill_discrete(name = "Smoke Classification",
                     labels = c("Non Smoker", "Smoker"))
 
 #difference in weight of mothers smokers and nonsmokers
-t.test(df_smoker$wt,df_nonsmoker$wt, alternative = "less")
+t.test(df_smoker$wt.1,df_nonsmoker$wt.1, alternative = "less")
 
-# of babies that died before 28
-#total of 
 
