@@ -27,7 +27,7 @@ library(moments)
 
 #Load dataset
 df<-read.csv("babies23.txt", header = TRUE, sep="")
-mortality_df <- read_excel('mort2012.xlsx')
+
 
 ######################
 ####Data managment####
@@ -178,25 +178,25 @@ ggplot(data=subset(df, !is.na(smoke_binary)), aes(x=gestation, fill=smoke_binary
 ###QQ plots###
 #weight
 s_weight_qq<-ggplot(df_smoker, aes(sample = wt, alpha = 0.2)) +
-  stat_qq() + stat_qq_line() + ggtitle("Smokers") +
+  stat_qq() + stat_qq_line() + ggtitle("Birth Weights from Smokers") +
   labs(y= "Birth Weight Quantile", x = "Theoretical Quantile") +
   theme(plot.title = element_text(hjust = 0.5), legend.position = "none") 
 
 ns_weight_qq<-ggplot(df_nonsmoker, aes(sample = wt, alpha = 0.2)) +
   labs(y= "Birth Weight Quantile", x = "Theoretical Quantile") +
-  stat_qq() + stat_qq_line() + ggtitle("Nonsmokers") +
+  stat_qq() + stat_qq_line() + ggtitle("Birth Weights from Non-smokers") +
   theme(plot.title = element_text(hjust = 0.5), legend.position = "none") 
 
 grid.arrange(s_weight_qq, ns_weight_qq, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=1)))
 
 #gestation
 s_gestation_qq<-ggplot(df_smoker, aes(sample = gestation, alpha = 0.2)) +
-  stat_qq() + stat_qq_line() + ggtitle("Smokers") +
+  stat_qq() + stat_qq_line() + ggtitle("Gestation of Smokers") +
   theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
   labs(y= "Gestation Quantile", x = "Theoretical Quantile")
 
 ns_gestation_qq<-ggplot(df_nonsmoker, aes(sample = gestation, alpha = 0.2), alpha = 0.5) +
-  stat_qq() + stat_qq_line() + ggtitle("Nonsmokers") +
+  stat_qq() + stat_qq_line() + ggtitle("Gestation of Nonsmokers") +
   theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
   labs(y= "Gestation Quantile", x = "Theoretical Quantile")
 
@@ -217,7 +217,7 @@ ggplot(df, aes(x=smoke, y=gestation)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "Smoking Classification", y = "Days")
 
-grid.arrange(s_gestation_qq, ns_gestation_qq, ncol=2, top = textGrob("Gestation",gp=gpar(fontsize=20,font=1)))
+grid.arrange(s_gestation_qq, ns_gestation_qq,s_weight_qq, ns_weight_qq, ncol=2, nrow=2, top = textGrob("Q-Q Plots",gp=gpar(fontsize=20,font=1)))
 
 # smoking time
 df_smoke_during_preg <- df%>%filter(time == c(1,2))
@@ -233,24 +233,24 @@ summary(df_smoke_1to4yr_before_preg$wt)
 summary(df_smoke_been_awhile$wt)
 
 x <- ggplot(df_smoke_during_preg, aes(time, y = wt)) +
-  geom_boxplot() + ggtitle("Smoked during pregnancy")+
+  geom_boxplot(fill="#56B4E9") + ggtitle("Smoked during pregnancy")+
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "smoked during pregnancy", y = "Weight (oz.)") +
   ylim(80, 180)
 
 y <- ggplot(df_smoke_1to4yr_before_preg, aes(x = time, y = wt)) +
-  geom_boxplot() + ggtitle("Smoked 0 to 3 years before birth")+
+  geom_boxplot(fill = "#56B4E9") + ggtitle("Smoked 0 to 3 years before birth")+
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "quit smoking 1 to 4 years before birth", y = "Weight (oz.)") +
   ylim(80, 180)
 
 z <- ggplot(df_smoke_been_awhile, aes(x = time, y = wt)) +
-  geom_boxplot() + ggtitle("Smoked 4+ years before birth") +
+  geom_boxplot(fill = "#56B4E9") + ggtitle("Smoked 4+ years before birth") +
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "quit smoking 5+ years before birth", y = "Weight (oz.)") +
   ylim(80, 180)
 
-grid.arrange(x,y,z, ncol = 3, top = textGrob("Smoking Time", gp = gpar(fontsize=20, font=3)))
+grid.arrange(x,y,z, ncol = 3, top = textGrob("Smoking Time", gp = gpar(fontsize=20, font=1)))
 
 
 
@@ -432,7 +432,10 @@ t.test(df_nonsmoker$gestation, df_smoker$gestation, alternative = "two.sided", v
 
 
 ## Data manipulation to find frequencies of mortality data ##
-age_weight_df <- mortality_df %>% select(aged, bwtr14)
+# age_weight_df <- mortality_df %>% select(aged, bwtr14)
+
+# write.csv(age_weight_df, file = "age_weight_df.csv")
+age_weight_df<-read.csv("age_weight_df.csv")
 
 early_death_df <- age_weight_df %>% dplyr::filter(aged < 28) %>%
   dplyr::group_by(bwtr14) %>%
@@ -454,6 +457,8 @@ prop.test(c(nrow(df_smoker %>% filter(wt < low_birth_weight)), nrow(df_nonsmoker
 frequency_df <- early_death_df %>% merge(all_death_df, by = "bwtr14") %>% 
   dplyr::mutate(frequency = n2/n1) %>%
   dplyr::mutate(underweight = ifelse(bwtr14 < 7, "1","0"))
+
+frequency_df<-frequency_df %>% filter(bwtr14 != 14)
 
 ## Plot of Frequency of Babies mortality < 28) 
 ggplot(frequency_df, aes(bwtr14, frequency, fill = underweight)) + 
@@ -486,5 +491,7 @@ scale_fill_discrete(name = "Smoke Classification",
 
 #difference in weight of mothers smokers and nonsmokers
 t.test(df_smoker$wt.1,df_nonsmoker$wt.1, alternative = "less")
+
+
 
 

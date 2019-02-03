@@ -1,0 +1,87 @@
+---
+title: "Maternal Smoking and Infant Death"
+author: Austin Clark, Timothy Lee, Andy Schleicher, Tom Tang, Aiden Yoon, Benson Wu
+date: February 2, 2019
+output: pdf_document
+---
+#Abstract 
+Method: This statistical analysis was conducted using a sample of 1236 infants collected by the Child Health and Development Studies from 1961 to 1962. Information about the infant's parents were also recorded. We hypothesized that maternal smoking will lead to higher infant mortality. Low infant birth weights result in higher chance Data was analyzed with R software. 
+
+##Results
+There was significant statistical evidence that smoking during pregnancy and the incidence of low birth weight are correlated. Our testing shows that both, the average birthweight of children from mothers who smoke is lower than that of children from mothers who do not smoke, and that smoking increases the chance of having what is classified as a "low". 
+
+##Conclusion
+Smoking affects birthweight. Pregnant mothers should 
+
+#Backgroud
+  For the last half century, occurrences of low baby birth weights have been associated with smoking during pregnancy. This relationship has been studied in depth with a plethora of  literature and information available. One significant outcome that resulted from these studies is The Comprehensive Smoking Education Act of 1984 (Public Law 98-474) enacted by Congress. The main consequence of this study reads: "Smoking by Pregnant Women May Result in Fetal Injury, Premature Birth, and Low Birth Weight" (https://www.cdc.gov/tobacco/data_statistics/sgr/2000/highlights/labels/index.htm). Thus, there has been a significant amount of data to force the CDC and the government to warn the public of this relationship and its consequences. 
+	While studying this relationship, we need to keep in mind that there are other factors that contribute to low baby birth weights such as the mother's age, period of gestation and mother's weight (1). In order to "measure" the difference between mothers who smoke while pregnant and mothers who do not smoke while pregnant is to focus on the mean of the babies birth weights(1). 
+	
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = FALSE, include = FALSE, message=FALSE}
+# Load dependencies
+library(dplyr)
+library(ggplot2)
+library(ggsci)
+library(grid)
+library(gridExtra)
+library(readxl)
+library(moments)
+```
+
+```{r, echo = FALSE, include = FALSE, message=FALSE}
+######################
+####Data managment####
+######################
+# Load dataset
+df<-read.csv("babies23.txt", header = TRUE, sep="")
+
+# Assign missing values 
+df$age[df$age == 99] <- NA
+df$gestation[df$gestation == 999] <- NA
+df$race[df$race == 99] <- NA
+df$age[df$age == 99] <- NA
+df$ed[df$ed == 9] <-NA
+df$ht[df$ht == 99] <-NA
+df$wt.1[df$wt.1 == 999] <-NA
+df$drace[df$drace == 99] <-NA
+df$dage[df$dage == 99] <-NA
+df$ded[df$ded == 9] <-NA
+df$dht[df$dht == 99] <-NA
+df$dwt[df$dwt == 999] <-NA
+df$inc[df$inc == 98] <-NA
+df$smoke[df$smoke==9]<-NA
+df$time[df$time==98]<-NA
+
+# Create indicator for smoking mothers; 1 = smoke, 0 else 
+df<- df%>%mutate(smoke_binary = ifelse(smoke == c(1,2,3), 1, 0))
+
+# Separate data into smokers and non smokers
+df_smoker<- df%>%filter(smoke_binary == 1)
+
+# Estimations for nonsmokers
+df_nonsmoker<- df%>%filter(smoke_binary ==0)
+
+# Some variables might be usefull
+numSmokers= length(df_smoker$id)
+numNonSmokers= length(df_nonsmoker$id)
+numUnderweightSmokers = 0
+for(i in 1:numSmokers){
+  if (df_smoker$wt[i]< 88.1){ numUnderweightSmokers= numUnderweightSmokers+1}
+}
+numUnderweightNonSmokers = 0
+for(i in 1:numNonSmokers){
+  if(df_nonsmoker$wt[i]<88.1){ numUnderweightNonSmokers= numUnderweightNonSmokers+1}
+}
+
+numHealthyWeightSmokers = numSmokers - numUnderweightSmokers
+numHealthyWeightNonSmokers = numNonSmokers- numUnderweightNonSmokers
+```
+#Data Set and Processing
+The data set consists of 1,236 observations. Observations that had extreme values that were outside the stated range for each variable were assigned to be missing values, as probably intended by the data collectors. Because the primary focus of this paper is to determine whether or not a maternal smoking affects the health of a baby while in the womb, our group made the decision to separate the data between babies' whose mothers have never smoked, and mothers who smoke or have smoked. The following table shows the summary statistics of birth weight, gestation, maternal age  
+
+
