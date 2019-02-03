@@ -138,7 +138,7 @@ ggplot(data=subset(df, !is.na(smoke_binary)), aes(x=wt, fill=smoke_binary)) +
   annotate("text", x = 145, y = .03, label = "127.6", color = "red")
 #Maybe add a count legend that changes color with higher counts in the bins
 #Side by side plot of Birth weights 
-grid.arrange(s_weight_hist, ns_weight_hist, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=3)))
+grid.arrange(s_weight_hist, ns_weight_hist, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=1)))
 
 #gestation 
 s_gestation_hist<-ggplot(df_smoker, aes(gestation)) + 
@@ -312,7 +312,7 @@ mc <- function(df, B, conf_lvl, mu, sigma)
   t <- numeric(B)
   n <- length(df)
   
-  for(i in 1:B)
+  for(i in 1:B) 
   {
     boot <- rnorm(n, mu, sigma)
     mean.mc <- mean(boot)
@@ -358,6 +358,7 @@ df<- df%>%mutate(low_birth_weight = ifelse(wt<low_birth_weight, 1, 0))
 #converted 2500g to ounces
 low_birth_weight <- 88.1849
 
+## Original frequencies
 #get frequency of smokers
 smoker_freq <- nrow(df_smoker %>% filter(wt < low_birth_weight)) / nrow(df_smoker)
 
@@ -440,8 +441,6 @@ all_death_df <- age_weight_df %>%
 prop.test(c(nrow(df_smoker %>% filter(wt < low_birth_weight)), nrow(df_nonsmoker %>% filter(wt < low_birth_weight))),
           c(nrow(df_smoker), nrow(df_nonsmoker)), alternative = "greater",
           conf.level = .95)
-## Two sample t test for diff in means smoker and nonsmoker##
-t.test(df_smoker$wt,df_nonsmoker$wt, alternative = "less")
 
 ## Frequency of Weights ##
 frequency_df <- early_death_df %>% merge(all_death_df, by = "bwtr14") %>% 
