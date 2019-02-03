@@ -16,6 +16,7 @@ setwd(paste0(path,'Documents/Git/M189WI2019'))
 
 
 #Load dependencies
+library(plyr)
 library(dplyr)
 library(ggplot2)
 library(ggsci)
@@ -119,7 +120,7 @@ ns_weight_hist<-ggplot(df_nonsmoker, aes(wt)) +
 #Try overlaying histograms 
 df$smoke_binary<-factor(df$smoke_binary)
 # Find the mean of each group
-library(plyr)
+
 df$smoke_binary<-factor(df$smoke_binary)
 cdf <- ddply(df, "smoke_binary", summarise, wt.mean=mean(wt, na.rm=T))
 cdf<-cdf[-3,]
@@ -189,13 +190,16 @@ ns_weight_qq<-ggplot(df_nonsmoker, aes(sample = wt, alpha = 0.2)) +
 grid.arrange(s_weight_qq, ns_weight_qq, ncol=2, top = textGrob("Birth Weights",gp=gpar(fontsize=20,font=1)))
 
 #gestation
-s_gestation_qq<-ggplot(df_smoker, aes(sample = gestation)) +
+s_gestation_qq<-ggplot(df_smoker, aes(sample = gestation, alpha = 0.2)) +
   stat_qq() + stat_qq_line() + ggtitle("Smokers") +
-  theme(plot.title = element_text(hjust = 0.5)) 
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+  labs(y= "Gestation Quantile", x = "Theoretical Quantile")
 
-ns_gestation_qq<-ggplot(df_nonsmoker, aes(sample = gestation), alpha = 0.5) +
+ns_gestation_qq<-ggplot(df_nonsmoker, aes(sample = gestation, alpha = 0.2), alpha = 0.5) +
   stat_qq() + stat_qq_line() + ggtitle("Nonsmokers") +
-  theme(plot.title = element_text(hjust = 0.5)) 
+  theme(plot.title = element_text(hjust = 0.5), legend.position = "none") +
+  labs(y= "Gestation Quantile", x = "Theoretical Quantile")
+
 
 
 ###Box plots###
@@ -213,7 +217,7 @@ ggplot(df, aes(x=smoke, y=gestation)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x = "Smoking Classification", y = "Days")
 
-grid.arrange(s_gestation_qq, ns_gestation_qq, ncol=2, top = textGrob("Gestation",gp=gpar(fontsize=20,font=3)))
+grid.arrange(s_gestation_qq, ns_gestation_qq, ncol=2, top = textGrob("Gestation",gp=gpar(fontsize=20,font=1)))
 
 # smoking time
 df_smoke_during_preg <- df%>%filter(time == c(1,2))
@@ -430,19 +434,16 @@ t.test(df_nonsmoker$gestation, df_smoker$gestation, alternative = "two.sided", v
 ## Data manipulation to find frequencies of mortality data ##
 age_weight_df <- mortality_df %>% select(aged, bwtr14)
 
-age_weight_df$bwtr14[age_weight_df$bwtr14 == 14] <- NA
-
-early_death_df <- age_weight_df %>% filter(aged < 28) %>%
-  group_by(bwtr14) %>%
-  summarise(n2 = n()) %>%
-  ungroup()
-
-
+early_death_df <- age_weight_df %>% dplyr::filter(aged < 28) %>%
+  dplyr::group_by(bwtr14) %>%
+  dplyr::summarise(n2 = n()) %>%
+  dplyr::ungroup()
 
 all_death_df <- age_weight_df %>% 
-                group_by(bwtr14) %>%
-                summarise(n1 = n()) %>%
-                ungroup()
+  dplyr::group_by(bwtr14) %>%
+  dplyr::summarise(n1 = n()) %>%
+  dplyr::ungroup()
+
 
 ## Two Proportion Z - Test ##
 prop.test(c(nrow(df_smoker %>% filter(wt < low_birth_weight)), nrow(df_nonsmoker %>% filter(wt < low_birth_weight))),
@@ -451,8 +452,8 @@ prop.test(c(nrow(df_smoker %>% filter(wt < low_birth_weight)), nrow(df_nonsmoker
 
 ## Frequency of Weights ##
 frequency_df <- early_death_df %>% merge(all_death_df, by = "bwtr14") %>% 
-                  mutate(frequency = n2/n1) %>% 
-                  mutate(underweight = ifelse(bwtr14 < 7, "1","0"))
+  dplyr::mutate(frequency = n2/n1) %>%
+  dplyr::mutate(underweight = ifelse(bwtr14 < 7, "1","0"))
 
 ## Plot of Frequency of Babies mortality < 28) 
 ggplot(frequency_df, aes(bwtr14, frequency, fill = underweight)) + 
