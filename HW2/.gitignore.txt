@@ -1,0 +1,13 @@
+# R files
+
+*.Rhistory
+
+*.RData
+
+*.Rproj
+
+*.RHistory
+
+*.RDataTmp
+
+*.RProj
