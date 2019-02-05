@@ -8,6 +8,7 @@ setwd(paste0(path,'Documents/Git/M189WI2019/HW2'))
 
 #Load Data
 df<-read.table("videodata.txt", header = T, sep = "", dec = ".")
+df2<-read.table("videodata2.txt", header = T, sep="", dec=".")
 
 ######################
 ####Data managment####
