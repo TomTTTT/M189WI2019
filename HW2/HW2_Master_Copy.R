@@ -18,6 +18,6 @@ videodf<-cbind(videodf1, videodf2)
 ######################
 
 # Assign NA to all 99 values in R
-df[df == 99] <- NA
+videodf[videodf == 99] <- NA
 
 
