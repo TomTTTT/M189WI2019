@@ -18,6 +18,10 @@ names(videodf2)[names(videodf2) == 'time'] <- 'time2'
 
 df <-cbind(videodf1, videodf2)
 
+# added a new variable named like_binary; 1 = like to play, 2 = like to or never played
+df <- df%>%mutate(df, like_binary = ifelse(like == 2| like == 3, 1, 0))
+
+
 
 ######################
 ####Data managment####
