@@ -18,8 +18,10 @@ names(videodf2)[names(videodf2) == 'time'] <- 'time2'
 
 df <-cbind(videodf1, videodf2)
 
-# added a new variable named like_binary; 1 = like to play, 2 = like to or never played
+# added a new variable named like_binary; 1 = like to play, 0 = like to or never played
 df <- df%>%mutate(df, like_binary = ifelse(like == 2| like == 3, 1, 0))
+# added a variable named played_prior; 1 = played before survey, 0 = didn't play
+df <- df%>%mutate(df, played_prior = ifelse(time > 0, 1, 0))
 
 
 
@@ -31,5 +33,21 @@ df <- df%>%mutate(df, like_binary = ifelse(like == 2| like == 3, 1, 0))
 df[df == 99] <- NA
 
 
+#######################
+##### Scenario 1 ######
+#######################
+
+freq1.like = nrow(df %>% filter(like_binary == 1))
+freq2.like = nrow(df %>% filter(like_binary == 0))
+
+freq1.play = nrow(df %>% filter(played_prior == 1))
+freq2.play = nrow(df %>% filter(played_prior == 0))
+
+p.hat = freq1.play/dim(df)[1]
+p.se = sqrt((p.hat * (1-p.hat)) / dim(df)[1])
+
+# 1.96 for 5%
+ci.play = c(freq1.play/dim(df)[1] - (p.se * 1.96),
+            freq1.play/dim(df)[1] + (p.se * 1.96))
 
 
