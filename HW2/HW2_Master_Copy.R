@@ -10,7 +10,7 @@ setwd(paste0(path,'Documents/Git/M189WI2019/HW2'))
 videodf1<-read.table("videodata.txt", header = T, sep = "", dec = ".")
 videodf2<-read.table("videodata2.txt", header = T, sep="", dec=".")
 
-videodf<-cbind(videodf1, videodf2)
+df <-cbind(videodf1, videodf2)
 
 
 ######################
