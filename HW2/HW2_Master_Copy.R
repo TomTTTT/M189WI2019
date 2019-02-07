@@ -1,4 +1,5 @@
 # Load working directory
+
 # Enter your own path in the quotes in the path variable
 # path<-"/Users/Timlee/"
 # setwd("C:/Users/Aiden/Desktop/UCSD/homework/math_189/case1/M189WI2019/")
@@ -6,9 +7,14 @@
 # path<-"C:/Users/buwen/"
 setwd(paste0(path,'Documents/Git/M189WI2019/HW2'))
 
-#Load Data
+# Load Dependencies 
+library(dplyr)
+# Load Data
 videodf1<-read.table("videodata.txt", header = T, sep = "", dec = ".")
+
 videodf2<-read.table("videodata2.txt", header = T, sep="", dec=".")
+# Rename time column in videodf2 to time2
+names(videodf2)[names(videodf2) == 'time'] <- 'time2'
 
 df <-cbind(videodf1, videodf2)
 
@@ -18,6 +24,8 @@ df <-cbind(videodf1, videodf2)
 ######################
 
 # Assign NA to all 99 values in R
-videodf[videodf == 99] <- NA
+df[df == 99] <- NA
+
+
 
 
