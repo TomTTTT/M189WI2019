@@ -1,5 +1,4 @@
 # Load working directory
-
 # Enter your own path in the quotes in the path variable
 # path<-"/Users/Timlee/"
 # setwd("C:/Users/Aiden/Desktop/UCSD/homework/math_189/case1/M189WI2019/")
@@ -7,23 +6,26 @@
 # path<-"C:/Users/buwen/"
 setwd(paste0(path,'Documents/Git/M189WI2019/HW2'))
 
-# Load Dependencies 
+#Load dependencies
 library(dplyr)
-# Load Data
-videodf1<-read.table("videodata.txt", header = T, sep = "", dec = ".")
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
 
+#Load Data
+videodf1<-read.table("videodata.txt", header = T, sep = "", dec = ".")
 videodf2<-read.table("videodata2.txt", header = T, sep="", dec=".")
+
 # Rename time column in videodf2 to time2
 names(videodf2)[names(videodf2) == 'time'] <- 'time2'
 
-df <-cbind(videodf1, videodf2)
+#Bind the two dataframes
+df<-cbind(videodf1, videodf2)
 
 # added a new variable named like_binary; 1 = like to play, 0 = like to or never played
-df <- df%>%mutate(df, like_binary = ifelse(like == 2| like == 3, 1, 0))
+df <- df%>%mutate(like_binary = ifelse(like == 2| like == 3, 1, 0))
 # added a variable named played_prior; 1 = played before survey, 0 = didn't play
-df <- df%>%mutate(df, played_prior = ifelse(time > 0, 1, 0))
-
-
+df <- df%>%mutate(played_prior = ifelse(time > 0, 1, 0))
 
 ######################
 ####Data managment####
@@ -31,6 +33,7 @@ df <- df%>%mutate(df, played_prior = ifelse(time > 0, 1, 0))
 
 # Assign NA to all 99 values in R
 df[df == 99] <- NA
+
 
 
 #######################
