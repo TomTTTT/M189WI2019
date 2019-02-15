@@ -11,6 +11,7 @@ library(dplyr)
 library(ggplot2)
 library(reshape2)
 library(gridExtra)
+library(ggsci)
 
 #Load Data
 videodf1<-read.table("videodata.txt", header = T, sep = "", dec = ".")
@@ -71,22 +72,74 @@ for(i in varlist){
 }
 
 
+
+
+for(i in varlist){
+  eval(parse(text=paste0("df_",i," <- df %>% select('",i,"', 'likesgames')
+                          df_",i,"<-as.data.frame(prop.table(table(df_",i,"$likesgames, df_",i,"$",i,"),2))
+                         plot_likesgames_",i,"<-df_",i," %>% na.omit(likesgames) %>% 
+                         ggplot(aes(factor(likesgames),y=..count.. / sum(..count..))) + 
+                         geom_bar(aes(fill = factor(",i,")), position = 'dodge') +
+                         scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) + xlab('Likes Games')")))
+}
+
+
+
+ggplot(test, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") + scale_y_continuous(label=scales::percent)
+
+
+
+##Correct 
+df_sex <- df %>% select("sex", "likesgames")
+df_sex<-data.frame(prop.table(table(df_sex$likesgames, df_sex$sex),2))
+df_sex$Freq<-round(df_sex$Freq, 3)
+ggplot(df_sex, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+  # scale_fill_discrete() +
+  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+  theme(plot.title = element_text(hjust = 0.5, size=20))+
+  ggtitle("Game Preferencece by Sex") + scale_fill_jama(name="Sex",
+                                                        breaks=c("0", "1"),
+                                                        labels=c("Female", "Male"), alpha=0.9)
+
+geom_text(aes(label=prob),position=position_dodge(0.9), vjust = .5, hjust = -.15, angle = 90, size=5)
+  
+
+
+
+
+
+
+
+
 plot_likesgames_home <-plot_likesgames_home +
   scale_fill_discrete(name="Has computer\nat home",
                       breaks=c("0", "1"),
                       labels=c("No", "Yes"))
 plot_likes
 
-
+ggplot(prop.table(table(df_sex$likesgames,df_sex$sex),margin=1)) 
 
 grid.arrange(plot_likesgames_home, plot_likesgames_sex, ncol=2)
 
 
+tab <- with(df_sex, table(likesgames, sex))
+test<-as.data.frame(prop.table(tab, margin = 1))
+
+ggplot(test, aes(factor(likesgames), y=)) + geom_bar(aes(fill=factor(sex)), position='dodge')
+
+
+
+mydf <- data.frame(prop.table(table(diamonds$clarity, diamonds$cut),2))
+ggplot(mydf, aes(Var1, Freq, fill = Var2)) + 
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels=scales::percent)
 
 
 
 
-
-
-
+##Correct 
+test<-data.frame(prop.table(table(df_sex$likesgames, df_sex$sex),2))
+ggplot(test, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") + scale_y_continuous(label=scales::percent)
 
