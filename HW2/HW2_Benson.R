@@ -9,13 +9,24 @@ setwd(paste0(path,'Documents/Git/M189WI2019/HW2'))
 #Load dependencies
 library(dplyr)
 library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(ggsci)
 
 #Load Data
-df1<-read.table("videodata.txt", header = T, sep = "", dec = ".")
-df2<-read.table("videodata2.txt", header = T, sep="", dec=".")
+videodf1<-read.table("videodata.txt", header = T, sep = "", dec = ".")
+videodf2<-read.table("videodata2.txt", header = T, sep="", dec=".")
 
-df<-cbind(df1, df2)
+# Rename time column in videodf2 to time2
+names(videodf2)[names(videodf2) == 'time'] <- 'time2'
 
+#Bind the two dataframes
+df<-cbind(videodf1, videodf2)
+
+# added a new variable named like_binary; 1 = like to play, 0 = like to or never played
+df <- df%>%mutate(like_binary = ifelse(like == 2| like == 3, 1, 0))
+# added a variable named played_prior; 1 = played before survey, 0 = didn't play
+df <- df%>%mutate(played_prior = ifelse(time > 0, 1, 0))
 
 ######################
 ####Data managment####
@@ -38,90 +49,97 @@ df$likesgames<- ifelse(df$like == 2 | df$like == 3, 1, 0)
 which(is.na(df$like))
 #Person 49
 
-
-d<-structure(list(respectfromsuperior = structure(c(1L, 1L, 1L, 
-                                                 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 1L, 1L, 2L, 1L, 1L, 1L, 
-                                                 1L, 1L, 1L, NA, 2L, 1L, 1L, 1L, 1L, 2L), .Label = c("agree", 
-                                                                                                     "disagree"), class = "factor"), respectideserve = structure(c(1L, 
-                                                                                                                                                                   1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 
-                                                                                                                                                                   2L, 1L, 1L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 1L, 2L), .Label = c("agree", 
-                                                                                                                                                                                                                               "disagree"), class = "factor"), undesirablechange = structure(c(2L, 
-                                                                                                                                                                                                                                                                                               2L, 2L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 1L, 2L, 2L, 1L, NA, 2L, 2L, 
-                                                                                                                                                                                                                                                                                               2L, 2L, 2L, 1L, 1L, NA, 1L, 2L, 1L, 2L, 2L, 2L), .Label = c("agree", 
-                                                                                                                                                                                                                                                                                                                                                           "disagree"), class = "factor"), jobsecuritypoor = structure(c(2L, 
-                                                                                                                                                                                                                                                                                                                                                                                                                         2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 1L, 
-                                                                                                                                                                                                                                                                                                                                                                                                                         2L, 2L, 2L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c("agree", 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     "disagree"), class = "factor"), promotionprospectsadequate = structure(c(2L, 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              1L, 1L, 1L, 2L, 1L, 1L, 1L, 2L, 1L, 2L, 2L, 1L, 1L, 2L, 1L, 1L, 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              2L, 1L, 2L, 2L, 1L, 2L, 2L, 1L, 2L, 2L, 2L, 2L), .Label = c("agree", 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          "disagree"), class = "factor"), salaryadequate = structure(c(2L, 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       1L, 1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 1L, 2L, 2L, 2L, 2L, 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       2L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c("agree", 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   "disagree"), class = "factor"), branch = structure(c(1L, 1L, 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        1L, 1L, 1L, 1L, 1L, 1L, 1L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        3L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c("Edinburgh", 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                "Head Office", "Manchester"), class = "factor")), .Names = c("respectfromsuperior", 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             "respectideserve", "undesirablechange", "jobsecuritypoor", "promotionprospectsadequate", 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             "salaryadequate", "branch"), class = "data.frame", row.names = c(1L, 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              2L, 4L, 6L, 10L, 11L, 13L, 15L, 16L, 17L, 19L, 20L, 22L, 23L, 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              25L, 27L, 29L, 30L, 32L, 33L, 34L, 35L, 39L, 40L, 41L, 42L, 43L, 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              44L, 45L))
-# get the stats using aggregate
-res <- aggregate(d[,1:6], list(d$branch), function(x) sum(x=="agree", na.rm = T)/length(x))
-res
-Group.1   respectfromsuperior respectideserve undesirablechange jobsecuritypoor promotionprospectsadequate salaryadequate
-1 Edinburgh                 1.0       0.8888889         0.1111111             0.0                  0.6666667      0.4444444
-2 Head Office               0.7       0.3000000         0.4000000             0.2                  0.2000000      0.0000000
-3 Manchester                0.8       0.8000000         0.2000000             0.1                  0.6000000      0.2000000
-# to long format
-library(reshape2)
-res_long <- melt(res, id.vars='Group.1')
-# plot
-ggplot(data=res_long, aes(x=Group.1, y=value, fill=variable)) +
-  geom_bar(stat="identity", position=position_dodge())
+# Grouped
 
 
-df_summary <- aggregate(df[,c("sex")], list(df$likesgames), function(x) sum(x=="1", na.rm=T)/length(x))
 
-library(reshape2)
+df_sex <- df %>% select("sex", "likesgames")
+df_sex %>% na.omit(likesgames) %>% 
+  ggplot(aes(factor(likesgames),..count..)) + 
+  geom_bar(aes(fill = factor(sex)), position = "dodge") +
+  scale_x_discrete(labels=c("0" = "No", "1" = "No")) + xlab("Likes Games") +
+  guides(fill=guide_legend(title="sex"))
 
-df_summary_long <- melt(df_summary, id.vars='Group.1')
-ggplot(data=df_summary_long, aes(x=Group.1, y=value, fill=variable)) +
-  geom_bar(stat="identity", position=position_dodge())
+#Now loop through them 
 
-df$likesgames<-
+varlist<-c("sex", "home")
+for(i in varlist){
+  eval(parse(text=paste0("df_",i," <- df %>% select('",i,"', 'likesgames')
+  plot_likesgames_",i,"<-df_",i," %>% na.omit(likesgames) %>% 
+    ggplot(aes(factor(likesgames),y=..count.. / sum(..count..))) + 
+    geom_bar(aes(fill = factor(",i,")), position = 'dodge') +
+    scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) + xlab('Likes Games')")))
+}
 
-df %>% filter(likesgames==1 | likesgames==0) %>% 
-  filter(!is.na(likesgames)) %>%
-  group_by(likesgames, sex) %>% summarise(Count=n()) %>%
-  mutate(pct=prop.table(Count)*100) %>%
-  ggplot(aes(x=reorder(sex, -pct), y=pct, fill=likesgames)) +
-    geom_bar(stat='identity') + theme_bw() +
-      theme(plot.title = element_text(hjust = 0.5)) +
-      scale_fill_manual(values=c('#D358F7', '#2E64FE')) +
-        facet_wrap(~likesgames) +
-          theme(strip.background = element_blank(), strip.text.x=element_blank()) +
-        labs(x='Sex', y = 'Percent', title='Likes Games by Sex') +
-          geom_text(aes(x=sex, y=0.01, label= sprintf("%.2f%%", pct)),
-            hjust=0.5, vjust=-3, size=4, 
-            colour="black", fontface="bold")
 
-df$sex<-factor(df$sex)
-ggplot(df) + geom_bar(aes(x=interaction(likesgames, sex)))
+
+
+for(i in varlist){
+  eval(parse(text=paste0("df_",i," <- df %>% select('",i,"', 'likesgames')
+                          df_",i,"<-as.data.frame(prop.table(table(df_",i,"$likesgames, df_",i,"$",i,"),2))
+                         plot_likesgames_",i,"<-df_",i," %>% na.omit(likesgames) %>% 
+                         ggplot(aes(factor(likesgames),y=..count.. / sum(..count..))) + 
+                         geom_bar(aes(fill = factor(",i,")), position = 'dodge') +
+                         scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) + xlab('Likes Games')")))
+}
+
+
+
+ggplot(test, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") + scale_y_continuous(label=scales::percent)
+
+
+
+##Correct 
+df_sex <- df %>% select("sex", "likesgames")
+df_sex<-data.frame(prop.table(table(df_sex$likesgames, df_sex$sex),2))
+df_sex$Freq<-round(df_sex$Freq, 3)
+ggplot(df_sex, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+  # scale_fill_discrete() +
+  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+  theme(plot.title = element_text(hjust = 0.5, size=20))+
+  ggtitle("Game Preferencece by Sex") + scale_fill_jama(name="Sex",
+                                                        breaks=c("0", "1"),
+                                                        labels=c("Female", "Male"), alpha=0.9)
+
+geom_text(aes(label=prob),position=position_dodge(0.9), vjust = .5, hjust = -.15, angle = 90, size=5)
   
 
 
-ggplot(bind_v1_c",i,"_conts$'Apnea/Hypopnea Index (0-141.667)') + 
-  geom_bar(aes(x=interaction(solutions, LatentClass), y=est, color=LatentClass, group=LatentClass), stat='identity', alpha=0.5, size=2) +
-  geom_text(aes(x=interaction(solutions, LatentClass), y=est, label=est), position=position_stack(vjust=0.5), size=5) +
-  labs(y='Mean', x = 'Class')
-test <- (df %>% group_by(likesgames, sex) %>% summarise(Count = n()) %>% mutate(pct = prop.table(Count)*100)) %>% select(likesgames, sex, pct)
-test <- test[complete.cases(test),]
-
-test$sex <- as.character(test$sex)
 
 
-View(reshape(test, idvar = "likesgames", timevar = "sex" , direction = "wide"))
 
 
+
+
+plot_likesgames_home <-plot_likesgames_home +
+  scale_fill_discrete(name="Has computer\nat home",
+                      breaks=c("0", "1"),
+                      labels=c("No", "Yes"))
+plot_likes
+
+ggplot(prop.table(table(df_sex$likesgames,df_sex$sex),margin=1)) 
+
+grid.arrange(plot_likesgames_home, plot_likesgames_sex, ncol=2)
+
+
+tab <- with(df_sex, table(likesgames, sex))
+test<-as.data.frame(prop.table(tab, margin = 1))
+
+ggplot(test, aes(factor(likesgames), y=)) + geom_bar(aes(fill=factor(sex)), position='dodge')
+
+
+
+mydf <- data.frame(prop.table(table(diamonds$clarity, diamonds$cut),2))
+ggplot(mydf, aes(Var1, Freq, fill = Var2)) + 
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels=scales::percent)
+
+
+
+
+##Correct 
+test<-data.frame(prop.table(table(df_sex$likesgames, df_sex$sex),2))
+ggplot(test, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") + scale_y_continuous(label=scales::percent)
 
