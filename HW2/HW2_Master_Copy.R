@@ -116,4 +116,79 @@ Q1table = as.table(Q1table)
 Q1table
 
 chisq.test(Q1table)
+            
+#####################
+#####Question 3######
+#####################
+
+#need to build a matrix this is people that play games
+#monthly or more/ played games in the last week
+df_likesgames_subset <- subset(df, time>0 |freq<=3)
+df_notLikeGames_subset <- subset(df, freq==4 & time==0|is.na(df$freq))
+
+ggplot(df_likesgames_subset, aes(x=time)) + geom_histogram()
+
+
+xbar=mean(df$time)
+xbarLikesGames= mean(df_likesgames_subset$time)
+
+
+placehold= 0
+for(i in 1:length(df$time)){placehold= placehold+(xbar-df$time[i])^2}
+sampleVar= placehold/(length(df$time)-1)
+
+unbiasedSampleVar=sampleVar*(314-1)/(314)
+unbiasedSampleSD= sqrt(unbiasedSampleVar)
+
+interval = c(xbar-2*unbiasedSampleSD/sqrt(length(df$time)),xbar+2*unbiasedSampleSD/sqrt(length(df$time)))
+interval
+
+##interval only looking at people that play games
+placehold= 0
+for(i in 1:length(df_likesgames_subset$time)){placehold= placehold+(xbar-df_likesgames_subset$time[i])^2}
+sampleVarLikesGames= placehold/(length(df_likesgames_subset$time)-1)
+
+ubSampleVarLikesG=sampleVarLikesGames*(314-1)/(314)
+ubSampleSDLikesG= sqrt(ubSampleVarLikesG)
+
+intervalLikesGames = c(xbarLikesGames-2*ubSampleSDLikesG/sqrt(length(df_likesgames_subset$time))
+                       ,xbarLikesGames+2*ubSampleSDLikesG/sqrt(length(df_likesgames_subset$time)))
+intervalLikesGames
+
+#####################
+##### BOOTSTRAP #####
+#####################
+
+### MEAN ###
+ci.mean.boot = function(data, B, conf_lvl)
+{
+  mean.data = mean(data, na.rm = TRUE)
+  sd.data = sd(data, na.rm = TRUE)
+  t = numeric(B)
+  n = length(B)
+  boot.population <- rep(data, length.out = 365)
+  
+  for (i in 1:B)
+  {
+    # boot <- sample(B, n, replace = TRUE)
+    boot.sample <- sample(boot.population, size = 91, replace = F)
+    
+    mean.b <- mean(boot.sample)
+    sd.b <- sd(boot.sample)
+    
+    # t-test statistic
+    t[i] <- (mean.b - mean.data)/(sd.b/sqrt(n))
+  }
+  
+  ci <- mean.data  + (sd.data/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2))
+  return(ci)
+}
+
+B = 1000
+conf_lvl = 0.90
+
+# error because boot.sample is filled with NA values
+ci.mean.boot(df$time, B, conf_lvl)
+ci.mean.boot(df$time, B, conf_lvl)
+
 
