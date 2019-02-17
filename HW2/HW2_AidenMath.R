@@ -27,9 +27,9 @@ names(videodf2)[names(videodf2) == 'time'] <- 'time2'
 df <- cbind(videodf1, videodf2)
 
 # added a new variable named like_binary; 1 = like to play, 0 = like to or never played
-df <- df%>%mutate(df, like_binary = ifelse(like == 2| like == 3, 1, 0))
+df <- df%>%mutate(like_binary = ifelse(like == 2| like == 3, 1, 0))
 # added a variable named played_prior; 1 = played before survey, 0 = didn't play
-df <- df%>%mutate(df, played_prior = ifelse(time > 0, 1, 0))
+df <- df%>%mutate(played_prior = ifelse(time > 0, 1, 0))
 
 ######################
 ####Data managment####
@@ -53,10 +53,13 @@ freq1.play = nrow(df %>% filter(played_prior == 1))
 freq0.play = nrow(df %>% filter(played_prior == 0))
 
 # total population
-N <- dim(df)[1]
+n <- dim(df)[1]
+N <- 314
+
 p.hat = freq1.play/N
-# sampled error
-p.se = sqrt((p.hat * (1-p.hat)) / N)
+# standard error estimator
+p.se = (sqrt(p.hat * (1 - p.hat)) * sqrt(N-n)) / (sqrt(n-1) * sqrt(N))
+  # sqrt((p.hat * (1-p.hat)) / N)
 
 # 1.96 for 5% of people who played week prior
 ci.play = c(freq1.play/N - (p.se * 1.96),
@@ -64,6 +67,111 @@ ci.play = c(freq1.play/N - (p.se * 1.96),
 
 ci.play
 
+
+
+
+
+#######################
+###### BOOTY POP ######
+#######################
+
+n <- 314
+
+boot.population.like <- rep(df$like_binary, length.out = n)
+boot.population.play <- rep(df$played_prior, length.out = n)
+boot.population.time <- rep(df$time, length.out = n)
+
+#####################
+##### BOOTSTRAP #####
+#####################
+
+### MEAN ###
+ci.mean.boot = function(data, B, conf_lvl)
+{
+  mean.data = mean(data, na.rm = TRUE)
+  sd.data = sd(data, na.rm = TRUE)
+  t = numeric(B)
+  n = length(B)
+  boot.population <- rep(data, length.out = 365)
+  
+  for (i in 1:B)
+  {
+    # boot <- sample(B, n, replace = TRUE)
+    boot.sample <- sample(boot.population, size = 91, replace = F)
+
+    mean.b <- mean(boot.sample)
+    sd.b <- sd(boot.sample)
+  
+    # t-test statistic
+    t[i] <- (mean.b - mean.data)/(sd.b/sqrt(n))
+  }
+  
+  ci <- mean.data  + (sd.data/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2))
+  return(ci)
+}
+
+B = 1000
+conf_lvl = 0.90
+
+# error because boot.sample is filled with NA values
+ci.mean.boot(df$like_binary, B, conf_lvl)
+ci.mean.boot(df$played_prior, B, conf_lvl)
+ci.mean.boot(df$time,B, conf_lvl)
+
+
+
+
+# ### Std Dev ###
+# ci.var.Boot = function(data, B, n, conf_lvl)
+# {
+#   mean.data = mean(data, na.rm=T)
+#   sd.data = sd(data, na.rm=T)
+#   t = numeric(B)
+#   n = length(data)
+#   
+#   for (i in 1:B)
+#   {
+#     boot.sample <- sample(boot.population, size = n, replace = F)
+#     
+#     mean.b <- mean(boot.sample)
+#     sd.b <- sd(boot.sample)
+#     
+#     t[i] <- ((n-1) * sd.b) / qchisq(conf_lvl/2, n-1)
+#   }
+#   
+#   ci <- 
+#   return(ci)
+#   
+# }
+# 
+# n = dim(df)[1]
+# ci.var.boot(df$like_binary, B, n, conf_lvl)
+
+
+##############
+
+bootobject= NULL
+for ( i in 1:400)
+{
+  bootobject[i]=mean(sample(as.vector(df$time),size=91,replace=TRUE))
+}
+m=qplot(bootobject, geom="histogram")
+m + geom_histogram(aes(fill = ..count..))
+require(e1071)
+kurtosis_=NULL
+for (i in 1:1000)
+{
+  kurtosis_[i]=kurtosis(rnorm(400))
+}
+m=qplot(kurtosis_, geom="histogram")
+m + geom_histogram(aes(fill = ..count..))
+skewness_=NULL
+for (i in 1:1000)
+{
+  skewness_[i]=kurtosis(rnorm(400))
+}
+m=qplot(skewness_, geom="histogram")
+m + geom_histogram(aes(fill = ..count..))
 
 ####################
 #### JACKKNIFE #####
@@ -111,9 +219,6 @@ ci.play
 
 
 
-
-
-
 # jackknife result from like_binary mean
 jk.like <- jackknife(boot.population.like, mean)
 jk.like
@@ -130,78 +235,3 @@ jk.play
 # |:------:|:----:|:----:|:----:|
 # |0.3736264|0.05099343|0.05099343|0|
 
-
-
-
-#######################
-###### BOOTY POP ######
-#######################
-
-B <- 10000
-n <- 365
-
-boot.population.like <- rep(df$like_binary, length.out = n)
-boot.population.play <- rep(df$played_prior, length.out = n)
-
-
-#####################
-##### BOOTSTRAP #####
-#####################
-
-### MEAN ###
-ci.mean.boot = function(data, B, conf_lvl)
-{
-  mean.data = mean(data, na.rm = TRUE)
-  sd.data = sd(data, na.rm = TRUE)
-  t = numeric(B)
-  n = length(B)
-  boot.population <- rep(data, length.out = 365)
-  
-  for (i in 1:B)
-  {
-    # boot <- sample(B, n, replace = TRUE)
-    boot.sample <- sample(boot.population, size = 91, replace = F)
-
-    mean.b <- mean(boot.sample)
-    sd.b <- sd(boot.sample)
-  
-    # t-test statistic
-    t[i] <- (mean.b - mean.data)/(sd.b/sqrt(n))
-  }
-  
-  ci <- mean.data  + (sd.data/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2))
-  return(ci)
-}
-
-B = 1000
-conf_lvl = 0.90
-
-# error because boot.sample is filled with NA values
-ci.mean.boot(df$like_binary, B, conf_lvl)
-ci.mean.boot(df$played_prior, B, conf_lvl)
-
-
-
-### Std Dev ###
-ci.var.Boot = function(data, B, n, conf_lvl)
-{
-  mean.data = mean(data, na.rm=T)
-  sd.data = sd(data, na.rm=T)
-  t = numeric(B)
-  n = length(data)
-  
-  for (i in 1:B)
-  {
-    boot.sample <- sample(boot.population, size = n, replace = F)
-    
-    mean.b <- mean(boot.sample)
-    sd.b <- sd(boot.sample)
-    
-    t[i] <- ((n-1) * sd.b) / qchisq(conf_lvl/2, n-1)
-  }
-  
-  
-}
-
-n = dim(df)[1]
-ci.var.boot(df$like_binary, B, n, conf_lvl)
