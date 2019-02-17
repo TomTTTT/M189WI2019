@@ -56,14 +56,14 @@ freq0.play = nrow(df %>% filter(played_prior == 0))
 n <- dim(df)[1]
 N <- 314
 
-p.hat = freq1.play/N
+p.hat = freq1.play/n
 # standard error estimator
 p.se = (sqrt(p.hat * (1 - p.hat)) * sqrt(N-n)) / (sqrt(n-1) * sqrt(N))
   # sqrt((p.hat * (1-p.hat)) / N)
 
 # 1.96 for 5% of people who played week prior
-ci.play = c(freq1.play/N - (p.se * 1.96),
-            freq1.play/N + (p.se * 1.96))
+ci.play = c(p.hat - (p.se/(sqrt(n)) * 1.96),
+            p.hat + (p.se/sqrt(n) * 1.96))
 
 ci.play
 
@@ -111,7 +111,7 @@ ci.mean.boot = function(data, B, conf_lvl)
 }
 
 B = 1000
-conf_lvl = 0.90
+conf_lvl = 0.95
 
 # error because boot.sample is filled with NA values
 ci.mean.boot(df$like_binary, B, conf_lvl)
@@ -186,7 +186,7 @@ m + geom_histogram(aes(fill = ..count..))
 #   n <- length(x)
 #   x.hat <- numeric(n)
 # 
-#   
+#     
 #   for (i in 1:B)
 #   {
 #     sd.jk = 0
