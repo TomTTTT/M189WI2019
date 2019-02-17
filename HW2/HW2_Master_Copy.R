@@ -53,4 +53,142 @@ p.se = sqrt((p.hat * (1-p.hat)) / dim(df)[1])
 ci.play = c(freq1.play/dim(df)[1] - (p.se * 1.96),
             freq1.play/dim(df)[1] + (p.se * 1.96))
 
+########################
+##### Scenario 2 #######
+########################
+
+ggplot(df, aes(x=freq)) + geom_histogram()
+#note 13 observations are not available for frequency of play
+ggplot(df, aes(x=time)) + geom_histogram()
+
+#proportion that plays games at least every week
+numPlayGames= 0
+for(i in 1:length(df$freq)){
+  if(df$freq[i] < 3 & !is.na(df$freq[i])){numPlayGames = numPlayGames+1}
+}
+
+numObsPlayedGames =0
+for(i in 1:length(df$time)){
+  if(df$time[i]>0){numObsPlayedGames= numObsPlayedGames+1}
+}
+
+propPlayGames= numPlayGames/(91-13)
+propPlayWeekBefore= numObsPlayedGames/(91)
+
+obsDaily=0
+obsWeekly=0
+obsMonthly=0
+obsSemesterly= 0
+for(i in 1:length(df$time)){
+  
+  if(df$time[i]>3.5){obsDaily= obsDaily+1}
+  
+  else if(df$time[i]<=3.5 & df$time[i]>.5){obsWeekly= obsWeekly+1}
+  
+  else if(df$time[i]<=.5 & df$time[i]>0){obsMonthly= obsMonthly+1}
+  
+  else{obsSemesterly= obsSemesterly+1}
+  
+}
+
+expDaily=0
+expWeekly= 0
+expMonthly=0
+expSemesterly= 0
+for(i in 1:length(df$freq)){
+  
+  if(df$freq[i] == 4 | is.na(df$freq[i])){expSemesterly= expSemesterly+1}
+  
+  else if(df$freq[i] == 3 & !is.na(df$freq[i])){expMonthly= expMonthly+1}
+  
+  else if(df$freq[i] == 2 & !is.na(df$freq[i])){expWeekly= expWeekly+1}
+  
+  else{expDaily= expDaily+1}
+}
+
+Q1table = matrix(c(obsDaily,expDaily,obsWeekly, expWeekly,obsMonthly,expMonthly,
+                   obsSemesterly,expSemesterly),ncol=2, byrow = TRUE)
+colnames(Q1table)= c("observed", "expected")
+rownames(Q1table)= c("Daily","Weekly", "Monthly","Semesterly/Never")
+
+Q1table = as.table(Q1table)
+
+Q1table
+
+chisq.test(Q1table)
+            
+#####################
+#####Question 3######
+#####################
+
+#need to build a matrix this is people that play games
+#monthly or more/ played games in the last week
+df_likesgames_subset <- subset(df, time>0 |freq<=3)
+df_notLikeGames_subset <- subset(df, freq==4 & time==0|is.na(df$freq))
+
+ggplot(df_likesgames_subset, aes(x=time)) + geom_histogram()
+
+
+xbar=mean(df$time)
+xbarLikesGames= mean(df_likesgames_subset$time)
+
+
+placehold= 0
+for(i in 1:length(df$time)){placehold= placehold+(xbar-df$time[i])^2}
+sampleVar= placehold/(length(df$time)-1)
+
+unbiasedSampleVar=sampleVar*(314-1)/(314)
+unbiasedSampleSD= sqrt(unbiasedSampleVar)
+
+interval = c(xbar-2*unbiasedSampleSD/sqrt(length(df$time)),xbar+2*unbiasedSampleSD/sqrt(length(df$time)))
+interval
+
+##interval only looking at people that play games
+placehold= 0
+for(i in 1:length(df_likesgames_subset$time)){placehold= placehold+(xbar-df_likesgames_subset$time[i])^2}
+sampleVarLikesGames= placehold/(length(df_likesgames_subset$time)-1)
+
+ubSampleVarLikesG=sampleVarLikesGames*(314-1)/(314)
+ubSampleSDLikesG= sqrt(ubSampleVarLikesG)
+
+intervalLikesGames = c(xbarLikesGames-2*ubSampleSDLikesG/sqrt(length(df_likesgames_subset$time))
+                       ,xbarLikesGames+2*ubSampleSDLikesG/sqrt(length(df_likesgames_subset$time)))
+intervalLikesGames
+
+#####################
+##### BOOTSTRAP #####
+#####################
+
+### MEAN ###
+ci.mean.boot = function(data, B, conf_lvl)
+{
+  mean.data = mean(data, na.rm = TRUE)
+  sd.data = sd(data, na.rm = TRUE)
+  t = numeric(B)
+  n = length(B)
+  boot.population <- rep(data, length.out = 365)
+  
+  for (i in 1:B)
+  {
+    # boot <- sample(B, n, replace = TRUE)
+    boot.sample <- sample(boot.population, size = 91, replace = F)
+    
+    mean.b <- mean(boot.sample)
+    sd.b <- sd(boot.sample)
+    
+    # t-test statistic
+    t[i] <- (mean.b - mean.data)/(sd.b/sqrt(n))
+  }
+  
+  ci <- mean.data  + (sd.data/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2))
+  return(ci)
+}
+
+B = 1000
+conf_lvl = 0.90
+
+# error because boot.sample is filled with NA values
+ci.mean.boot(df$time, B, conf_lvl)
+ci.mean.boot(df$time, B, conf_lvl)
+
 

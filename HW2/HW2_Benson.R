@@ -61,49 +61,23 @@ ggplot(df_sex, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat =
   scale_y_continuous(label=scales::percent, limit=c(0,1)) +
   # scale_fill_discrete() +
   geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
-  theme(plot.title = element_text(hjust = 0.5, size=20))+
-  ggtitle("Game Preference by Sex") + scale_fill_jama(name="Sex",
+  theme(plot.title = element_text(hjust = 0.5, size=20), axis.text.x = element_text(size = 15),
+        axis.title.x = element_text(size=18),
+        axis.text.y = element_text(size = 15),
+        axis.title.y = element_text(size=18), 
+        legend.title=element_text(size=14)) +
+  ggtitle("Game preference by sex") + scale_fill_jama(name="Sex",
                                                         breaks=c("0", "1"),
-                                                        labels=c("Female", "Male"), alpha=0.9)
+                                                        labels=c("Female", "Male"), alpha=0.9) + 
+  guides(colour = guide_legend(override.aes = list(size=15)))
 
 
 
-#By Computer at home
-df_home <- df %>% select("home", "likesgames")
-df_home<-data.frame(prop.table(table(df_home$likesgames, df_home$home),2))
-df_home$Freq<-round(df_home$Freq, 3)
-ggplot(df_home, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
-  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
-  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
-  # scale_fill_discrete() +
-  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
-  theme(plot.title = element_text(hjust = 0.5, size=20))+
-  ggtitle("Game Preference by Home") + scale_fill_jama(name="Home",
-                                                        breaks=c("0", "1"),
-                                                        labels=c("No", "Yes"), alpha=0.9)
-
-#By location 
-df_home <- df %>% select("home", "likesgames")
-df_home<-data.frame(prop.table(table(df_home$likesgames, df_home$home),2))
-df_home$Freq<-round(df_home$Freq, 3)
-ggplot(df_home, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
-  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
-  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
-  # scale_fill_discrete() +
-  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
-  theme(plot.title = element_text(hjust = 0.5, size=20))+
-  ggtitle("Game Preference by Home") + scale_fill_jama(name="Home",
-                                                       breaks=c("0", "1"),
-                                                       labels=c("No", "Yes"), alpha=0.9)
 
 
 #By work 
 #initialize binary work variable 
 df$works <- ifelse(df$work == 0, 0, 1)
-
-
-
-#
 df_works <- df %>% select("works", "likesgames")
 df_works<-data.frame(prop.table(table(df_works$likesgames, df_works$works),2))
 df_works$Freq<-round(df_works$Freq, 3)
@@ -112,10 +86,76 @@ ggplot(df_works, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat
   scale_y_continuous(label=scales::percent, limit=c(0,1)) +
   # scale_fill_discrete() +
   geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
-  theme(plot.title = element_text(hjust = 0.5, size=20))+
-  ggtitle("Game Preference by Work") + scale_fill_jama(name="Work",
+  theme(plot.title = element_text(hjust = 0.5, size=20), axis.text.x = element_text(size = 15),
+        axis.title.x = element_text(size=18),
+        axis.text.y = element_text(size = 15),
+        axis.title.y = element_text(size=18), 
+        legend.title=element_text(size=14)) +
+  ggtitle("Game preference by whether someone works") + scale_fill_jama(name="Works",
                                                        breaks=c("0", "1"),
-                                                       labels=c("No", "Yes"), alpha=0.9)
+                                                       labels=c("No", "Yes"), alpha=0.9) + 
+  guides(colour = guide_legend(override.aes = list(size=15)))
+
+
+#By is there a computer at home
+df_home <- df %>% select("home", "likesgames")
+df_home<-data.frame(prop.table(table(df_home$likesgames, df_home$home),2))
+df_home$Freq<-round(df_home$Freq, 3)
+ggplot(df_home, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+  # scale_fill_discrete() +
+  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+  theme(plot.title = element_text(hjust = 0.5, size=20), axis.text.x = element_text(size = 15),
+        axis.title.x = element_text(size=18),
+        axis.text.y = element_text(size = 15),
+        axis.title.y = element_text(size=18), 
+        legend.title=element_text(size=14)) +
+  ggtitle("Game Preference by whether someone owns computer at home") + scale_fill_jama(name="Computer\n at home",
+                                                       breaks=c("0", "1"),
+                                                       labels=c("No", "Yes"), alpha=0.9) + 
+  guides(colour = guide_legend(override.aes = list(size=15)))
+
+#By own a pc
+df_own <- df %>% select("own", "likesgames")
+df_own<-data.frame(prop.table(table(df_own$likesgames, df_own$own),2))
+df_own$Freq<-round(df_own$Freq, 3)
+ggplot(df_own, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+  # scale_fill_discrete() +
+  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+  theme(plot.title = element_text(hjust = 0.5, size=20), axis.text.x = element_text(size = 15),
+        axis.title.x = element_text(size=18),
+        axis.text.y = element_text(size = 15),
+        axis.title.y = element_text(size=18), 
+        legend.title=element_text(size=14))+
+  ggtitle("Game Preference by whether someone owns a PC") + scale_fill_jama(name="Own",
+                                                      breaks=c("0", "1"),
+                                                      labels=c("No", "Yes"), alpha=0.9) + 
+  guides(colour = guide_legend(override.aes = list(size=15)))
+
+
+#Arcade preference
+#Create arcade binary variable
+df$arcade <- ifelse(df$where == 1 | df$where == 4 |  df$where == 6, 1, 0)
+df_arcade <- df %>% select("arcade", "likesgames")
+df_arcade<-data.frame(prop.table(table(df_arcade$likesgames, df_arcade$arcade),2))
+df_arcade$Freq<-round(df_arcade$Freq, 3)
+ggplot(df_arcade, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+  # scale_fill_discrete() +
+  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+  theme(plot.title = element_text(hjust = 0.5, size=20), axis.text.x = element_text(size = 15),
+        axis.title.x = element_text(size=18),
+        axis.text.y = element_text(size = 15),
+        axis.title.y = element_text(size=18), 
+        legend.title=element_text(size=14))+
+  ggtitle("Game Preference by whether someone plays at the arcade") + scale_fill_jama(name="Plays at\n arcade",
+                                                       breaks=c("0", "1"),
+                                                       labels=c("No", "Yes"), alpha=0.9) + 
+  guides(colour = guide_legend(override.aes = list(size=15)))
 
 
 
@@ -129,6 +169,35 @@ ggplot(df_works, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat
 
 
 
+# #Where
+# df_where <- df %>% select("where", "likesgames")
+# df_where<-data.frame(prop.table(table(df_where$likesgames, df_where$where),2))
+# df_where$Freq<-round(df_where$Freq, 3)
+# ggplot(df_where, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+#   xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+#   scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+#   # scale_fill_discrete() +
+#   geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+#   theme(plot.title = element_text(hjust = 0.5, size=20))+
+#   ggtitle("Game Preference by Where") + scale_fill_jama(name="Where",
+#                                                         breaks=c("1", "2", "3", "4", "5", "6"),
+#                                                         labels=c("Arcade", "Home Sys", "Home Comp", "Arcade or Home Sys", "Home comp/ sys", "All 3"), alpha=0.9)
+
+
+
+# #By Computer at home
+# df_home <- df %>% select("home", "likesgames")
+# df_home<-data.frame(prop.table(table(df_home$likesgames, df_home$home),2))
+# df_home$Freq<-round(df_home$Freq, 3)
+# ggplot(df_home, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+#   xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+#   scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+#   # scale_fill_discrete() +
+#   geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+#   theme(plot.title = element_text(hjust = 0.5, size=20))+
+#   ggtitle("Game Preference by Home") + scale_fill_jama(name="Home",
+#                                                         breaks=c("0", "1"),
+#                                                         labels=c("No", "Yes"), alpha=0.9)
 
 
 
