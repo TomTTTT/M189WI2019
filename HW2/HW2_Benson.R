@@ -160,8 +160,8 @@ ggplot(df_arcade, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", sta
 
 
 
-
-
+library(nnet)
+multinom(factor(like) ~factor(action) + factor(adv) + factor(sim) + factor(sport) + factor(strategy) + factor(relax) + factor(coord) + factor(challenge) , data=df)
 
 
 

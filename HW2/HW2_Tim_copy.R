@@ -48,15 +48,44 @@ df_notgamer<- df %>% filter(like == 1 | like == 4 | like == 5)
 df$likesgames<- ifelse(df$like == 2 | df$like == 3, 1, 0)
 
 
+
 data.tree <- tree(likesgames~educ+sex+age+home+math+work+own+cdrom+grade, data=df)
 plot(data.tree, type="uniform")
 text(data.tree)
 
-tree1 <- rpart(likesgames~educ+sex+age+home+math+work+own+cdrom+grade, data=df)
-prp(tree1)
-
-tree2 <- ctree(likesgames~educ+sex+age+home+math+work+own+cdrom+grade, data=df, na.action = na.omit())
-
-#Description of Tree:
 
 
+#Second attempt at tree
+
+df_gamer$likesgames<-ifelse(df_gamer$like==2, 1, 0)
+
+attribute<-c("action", "adv", "sim", "sport", "strategy")
+for(i in attribute){
+  eval(parse(text=paste0("
+                          tree_",i,"<-tree(",i,"~relax + coord + master + bored + graphic, data=df_gamer)
+                          plot(tree_",i,", type='uniform')
+                          text(tree_",i,")
+                         ")))
+}
+
+
+
+for(i in attribute){
+eval(parse(text=paste0("
+                          regression_",i,"<-glm(",i,"~relax + coord + master + bored + graphic, data=df_gamer, family=binomial(), na.action=na.omit)
+                       ")))
+
+}
+library(stargazer)
+stargazer(regression_action, regression_adv, regression_sim, regression_sport, regression_strategy, type="text", out="Attributes.txt")
+
+
+
+
+#out of the people who like games, the ones who did not put action as their top choice, were
+#most prevalent in the categories for relaxation = 0 and master = 0 and graphic = 0
+
+#out of the people who liked adventure games, the people liked it because it helped them relax and the games 
+#like the graphics
+
+#out of the people 
