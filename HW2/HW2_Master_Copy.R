@@ -53,4 +53,67 @@ p.se = sqrt((p.hat * (1-p.hat)) / dim(df)[1])
 ci.play = c(freq1.play/dim(df)[1] - (p.se * 1.96),
             freq1.play/dim(df)[1] + (p.se * 1.96))
 
+########################
+##### Scenario 2 #######
+########################
+
+ggplot(df, aes(x=freq)) + geom_histogram()
+#note 13 observations are not available for frequency of play
+ggplot(df, aes(x=time)) + geom_histogram()
+
+#proportion that plays games at least every week
+numPlayGames= 0
+for(i in 1:length(df$freq)){
+  if(df$freq[i] < 3 & !is.na(df$freq[i])){numPlayGames = numPlayGames+1}
+}
+
+numObsPlayedGames =0
+for(i in 1:length(df$time)){
+  if(df$time[i]>0){numObsPlayedGames= numObsPlayedGames+1}
+}
+
+propPlayGames= numPlayGames/(91-13)
+propPlayWeekBefore= numObsPlayedGames/(91)
+
+obsDaily=0
+obsWeekly=0
+obsMonthly=0
+obsSemesterly= 0
+for(i in 1:length(df$time)){
+  
+  if(df$time[i]>3.5){obsDaily= obsDaily+1}
+  
+  else if(df$time[i]<=3.5 & df$time[i]>.5){obsWeekly= obsWeekly+1}
+  
+  else if(df$time[i]<=.5 & df$time[i]>0){obsMonthly= obsMonthly+1}
+  
+  else{obsSemesterly= obsSemesterly+1}
+  
+}
+
+expDaily=0
+expWeekly= 0
+expMonthly=0
+expSemesterly= 0
+for(i in 1:length(df$freq)){
+  
+  if(df$freq[i] == 4 | is.na(df$freq[i])){expSemesterly= expSemesterly+1}
+  
+  else if(df$freq[i] == 3 & !is.na(df$freq[i])){expMonthly= expMonthly+1}
+  
+  else if(df$freq[i] == 2 & !is.na(df$freq[i])){expWeekly= expWeekly+1}
+  
+  else{expDaily= expDaily+1}
+}
+
+Q1table = matrix(c(obsDaily,expDaily,obsWeekly, expWeekly,obsMonthly,expMonthly,
+                   obsSemesterly,expSemesterly),ncol=2, byrow = TRUE)
+colnames(Q1table)= c("observed", "expected")
+rownames(Q1table)= c("Daily","Weekly", "Monthly","Semesterly/Never")
+
+Q1table = as.table(Q1table)
+
+Q1table
+
+chisq.test(Q1table)
 
