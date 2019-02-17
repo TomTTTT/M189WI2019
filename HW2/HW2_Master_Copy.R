@@ -11,6 +11,13 @@ library(dplyr)
 library(ggplot2)
 library(reshape2)
 library(gridExtra)
+library(stargazer)
+library(tree)
+library(rattle)
+library(rpart)
+library(rpart.plot)
+library(party)
+library(ggsci)
 
 #Load Data
 videodf1<-read.table("videodata.txt", header = T, sep = "", dec = ".")
@@ -40,18 +47,68 @@ df[df == 99] <- NA
 ##### Scenario 1 ######
 #######################
 
+
 freq1.like = nrow(df %>% filter(like_binary == 1))
-freq2.like = nrow(df %>% filter(like_binary == 0))
+freq0.like = nrow(df %>% filter(like_binary == 0))
 
 freq1.play = nrow(df %>% filter(played_prior == 1))
-freq2.play = nrow(df %>% filter(played_prior == 0))
+freq0.play = nrow(df %>% filter(played_prior == 0))
 
-p.hat = freq1.play/dim(df)[1]
-p.se = sqrt((p.hat * (1-p.hat)) / dim(df)[1])
+# total population
+n <- dim(df)[1]
+N <- 314
 
-# 1.96 for 5%
-ci.play = c(freq1.play/dim(df)[1] - (p.se * 1.96),
-            freq1.play/dim(df)[1] + (p.se * 1.96))
+p.hat = freq1.play/n
+# standard error estimator
+p.se = (sqrt(p.hat * (1 - p.hat)) * sqrt(N-n)) / (sqrt(n-1) * sqrt(N))
+# sqrt((p.hat * (1-p.hat)) / N)
+
+# 1.96 for 5% of people who played week prior
+ci.play = c(p.hat - (p.se/(sqrt(n)) * 2),
+            p.hat + (p.se/sqrt(n) * 2))
+
+ci.play
+
+
+#####################
+##### BOOTSTRAP #####
+#####################
+
+### MEAN ###
+ci.mean.boot = function(data, B, conf_lvl)
+{
+  mean.data = mean(data, na.rm = TRUE)
+  sd.data = sd(data, na.rm = TRUE)
+  t = numeric(B)
+  n = length(B)
+  boot.population <- rep(data, length.out = 365)
+  
+  for (i in 1:B)
+  {
+    # boot <- sample(B, n, replace = TRUE)
+    boot.sample <- sample(boot.population, size = 91, replace = F)
+    
+    mean.b <- mean(boot.sample)
+    sd.b <- sd(boot.sample)
+    
+    # t-test statistic
+    t[i] <- (mean.b - mean.data)/(sd.b/sqrt(n))
+  }
+  
+  ci <- mean.data  + (sd.data/sqrt(n)) * quantile(t, c((1-conf_lvl)/2, 1-(1-conf_lvl)/2))
+  return(ci)
+}
+
+B = 1000
+conf_lvl = 0.95
+
+# error because boot.sample is filled with NA values
+ci.mean.boot(df$like_binary, B, conf_lvl)
+ci.mean.boot(df$played_prior, B, conf_lvl)
+ci.mean.boot(df$time,B, conf_lvl)
+
+
+
 
 ########################
 ##### Scenario 2 #######
@@ -190,5 +247,223 @@ conf_lvl = 0.90
 # error because boot.sample is filled with NA values
 ci.mean.boot(df$time, B, conf_lvl)
 ci.mean.boot(df$time, B, conf_lvl)
+
+
+##################
+####Question 4####
+##################
+#Separate data by people who like video games and people who don't
+df_gamer<- df %>% filter(like == 2 | like == 3)
+df_notgamer<- df %>% filter(like == 1 | like == 4 | like == 5)
+
+#Create indicator for like and don't like in df
+df$likesgames<- ifelse(df$like == 2 | df$like == 3, 1, 0)
+
+
+
+data.tree <- tree(likesgames~educ+sex+age+home+math+work+own+cdrom+grade, data=df)
+plot(data.tree, type="uniform")
+text(data.tree)
+
+
+
+
+df_gamer$likesgames<-ifelse(df_gamer$like==2, 1, 0)
+attribute<-c("action", "adv", "sim", "sport", "strategy")
+
+for(i in attribute){
+  eval(parse(text=paste0("
+                         regression_",i,"<-glm(",i,"~relax + coord + master + bored + graphic, data=df_gamer, family=binomial(), na.action=na.omit)
+                         ")))
+  
+}
+library(stargazer)
+stargazer(regression_action, regression_adv, regression_sim, regression_sport, regression_strategy)
+
+#####################
+#####Question 5######
+#####################
+#By sex
+df_sex <- df %>% select("sex", "likesgames")
+df_sex<-data.frame(prop.table(table(df_sex$likesgames, df_sex$sex),2))
+df_sex$Freq<-round(df_sex$Freq, 3)
+ggplot(df_sex, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+  # scale_fill_discrete() +
+  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+  theme(plot.title = element_text(hjust = 0.5, size=20), axis.text.x = element_text(size = 15),
+        axis.title.x = element_text(size=18),
+        axis.text.y = element_text(size = 15),
+        axis.title.y = element_text(size=18), 
+        legend.title=element_text(size=14)) +
+  ggtitle("Game preference by sex") + scale_fill_jama(name="Sex",
+                                                      breaks=c("0", "1"),
+                                                      labels=c("Female", "Male"), alpha=0.9) + 
+  guides(colour = guide_legend(override.aes = list(size=15)))
+
+
+
+
+
+#By work 
+#initialize binary work variable 
+df$works <- ifelse(df$work == 0, 0, 1)
+df_works <- df %>% select("works", "likesgames")
+df_works<-data.frame(prop.table(table(df_works$likesgames, df_works$works),2))
+df_works$Freq<-round(df_works$Freq, 3)
+ggplot(df_works, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+  # scale_fill_discrete() +
+  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+  theme(plot.title = element_text(hjust = 0.5, size=20), axis.text.x = element_text(size = 15),
+        axis.title.x = element_text(size=18),
+        axis.text.y = element_text(size = 15),
+        axis.title.y = element_text(size=18), 
+        legend.title=element_text(size=14)) +
+  ggtitle("Game preference by whether someone works") + scale_fill_jama(name="Works",
+                                                                        breaks=c("0", "1"),
+                                                                        labels=c("No", "Yes"), alpha=0.9) + 
+  guides(colour = guide_legend(override.aes = list(size=15)))
+
+
+#By is there a computer at home
+df_home <- df %>% select("home", "likesgames")
+df_home<-data.frame(prop.table(table(df_home$likesgames, df_home$home),2))
+df_home$Freq<-round(df_home$Freq, 3)
+ggplot(df_home, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+  # scale_fill_discrete() +
+  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+  theme(plot.title = element_text(hjust = 0.5, size=20), axis.text.x = element_text(size = 15),
+        axis.title.x = element_text(size=18),
+        axis.text.y = element_text(size = 15),
+        axis.title.y = element_text(size=18), 
+        legend.title=element_text(size=14)) +
+  ggtitle("Game Preference by whether someone owns computer at home") + scale_fill_jama(name="Computer\n at home",
+                                                                                        breaks=c("0", "1"),
+                                                                                        labels=c("No", "Yes"), alpha=0.9) + 
+  guides(colour = guide_legend(override.aes = list(size=15)))
+
+#By own a pc
+df_own <- df %>% select("own", "likesgames")
+df_own<-data.frame(prop.table(table(df_own$likesgames, df_own$own),2))
+df_own$Freq<-round(df_own$Freq, 3)
+ggplot(df_own, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+  # scale_fill_discrete() +
+  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+  theme(plot.title = element_text(hjust = 0.5, size=20), axis.text.x = element_text(size = 15),
+        axis.title.x = element_text(size=18),
+        axis.text.y = element_text(size = 15),
+        axis.title.y = element_text(size=18), 
+        legend.title=element_text(size=14))+
+  ggtitle("Game Preference by whether someone owns a PC") + scale_fill_jama(name="Own",
+                                                                            breaks=c("0", "1"),
+                                                                            labels=c("No", "Yes"), alpha=0.9) + 
+  guides(colour = guide_legend(override.aes = list(size=15)))
+
+
+#Arcade preference
+#Create arcade binary variable
+df$arcade <- ifelse(df$where == 1 | df$where == 4 |  df$where == 6, 1, 0)
+df_arcade <- df %>% select("arcade", "likesgames")
+df_arcade<-data.frame(prop.table(table(df_arcade$likesgames, df_arcade$arcade),2))
+df_arcade$Freq<-round(df_arcade$Freq, 3)
+ggplot(df_arcade, aes(Var1, Freq, fill=Var2)) + geom_bar(position = "dodge", stat = "identity") +
+  xlab('Likes Games') + scale_x_discrete(labels=c('0' = 'No', '1' = 'Yes')) +
+  scale_y_continuous(label=scales::percent, limit=c(0,1)) +
+  # scale_fill_discrete() +
+  geom_text(aes(label=paste0(Freq*100,"%")), position=position_dodge(0.9), vjust =-1, size=5) +
+  theme(plot.title = element_text(hjust = 0.5, size=20), axis.text.x = element_text(size = 15),
+        axis.title.x = element_text(size=18),
+        axis.text.y = element_text(size = 15),
+        axis.title.y = element_text(size=18), 
+        legend.title=element_text(size=14))+
+  ggtitle("Game Preference by whether someone plays at the arcade") + scale_fill_jama(name="Plays at\n arcade",
+                                                                                      breaks=c("0", "1"),
+                                                                                      labels=c("No", "Yes"), alpha=0.9) + 
+  guides(colour = guide_legend(override.aes = list(size=15)))
+
+
+############
+#Question 6#
+############
+
+videodata = read.csv("videodata.txt", header=TRUE, sep="")
+surveydata = read.csv("videodata2.txt", header=TRUE, sep="")
+numRespondants <- 91
+numNonrespondants <- 4
+
+gradfreq <- table(videodata$grade)
+
+# chi-squared test assuming no F
+chisq.test(x=c(0,8,52,31), correct=FALSE, p=c(.1,.4,.3,.2))
+
+# chi-squared test assuming nonrespondants are F
+chisq.test(x=c(4,8,52,31), correct=FALSE, p=c(.1,.4,.3,.2))
+
+# bootstrap for A,B,C,D/F separately assuming no D or F
+fullsample <- rep(videodata$grade, length.out=314)
+numtrials <- 100
+gradeAdist <- 1:numtrials
+gradeBdist <- 1:numtrials
+gradeCdist <- 1:numtrials
+gradeDFdist <- 1:numtrials
+for (i in 1:numtrials){
+  samplegrade <- sample(fullsample, 91, replace=FALSE)
+  samplegradefreq <- table(samplegrade)/91
+  gradeAdist[i] <- samplegradefreq["4"]
+  gradeBdist[i] <- samplegradefreq["3"]
+  gradeCdist[i] <- samplegradefreq["2"]
+  gradeDFdist[i] <- 0
+}
+gradeAdist[is.na(gradeAdist)] <- 0
+gradeBdist[is.na(gradeBdist)] <- 0
+gradeCdist[is.na(gradeCdist)] <- 0
+gradeDFdist[is.na(gradeDFdist)] <- 0
+
+# grade A distribution
+quantile(gradeAdist, probs=c(0,0.025,0.05,0.25,0.5,0.75,0.95,0.975,1), names=TRUE)
+# grade B distribution
+quantile(gradeBdist, probs=c(0,0.025,0.05,0.25,0.5,0.75,0.95,0.975,1), names=TRUE)
+# grade C distribution
+quantile(gradeCdist, probs=c(0,0.025,0.05,0.25,0.5,0.75,0.95,0.975,1), names=TRUE)
+# grade D/F distribution
+quantile(gradeDFdist, probs=c(0,0.025,0.05,0.25,0.5,0.75,0.95,0.975,1), names=TRUE)
+
+# bootstrap for A,B,C,D/F separately assuming 4 Fs (nonrespondents)
+amendedgrade <- append(videodata$grade, c(0,0,0,0), after=length(videodata$grade))
+fullsample <- rep(amendedgrade, length.out=314)
+numtrials <- 100
+gradeAdist <- 1:numtrials
+gradeBdist <- 1:numtrials
+gradeCdist <- 1:numtrials
+gradeDFdist <- 1:numtrials
+for (i in 1:numtrials){
+  samplegrade <- sample(fullsample, 95, replace=FALSE)
+  samplegradefreq <- table(samplegrade)/95
+  gradeAdist[i] <- samplegradefreq["4"]
+  gradeBdist[i] <- samplegradefreq["3"]
+  gradeCdist[i] <- samplegradefreq["2"]
+  gradeDFdist[i] <- samplegradefreq["0"]
+}
+gradeAdist[is.na(gradeAdist)] <- 0
+gradeBdist[is.na(gradeBdist)] <- 0
+gradeCdist[is.na(gradeCdist)] <- 0
+gradeDFdist[is.na(gradeDFdist)] <- 0
+
+# grade A distribution
+quantile(gradeAdist, probs=c(0,0.025,0.05,0.25,0.5,0.75,0.95,0.975,1), names=TRUE)
+# grade B distribution
+quantile(gradeBdist, probs=c(0,0.025,0.05,0.25,0.5,0.75,0.95,0.975,1), names=TRUE)
+# grade C distribution
+quantile(gradeCdist, probs=c(0,0.025,0.05,0.25,0.5,0.75,0.95,0.975,1), names=TRUE)
+# grade D/F distribution
+quantile(gradeDFdist, probs=c(0,0.025,0.05,0.25,0.5,0.75,0.95,0.975,1), names=TRUE)
+
 
 
