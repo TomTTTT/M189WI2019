@@ -1,0 +1,14 @@
+---
+title: "Unusual Cluster in the Palindrome"
+author: "Benson Wu"
+date: "February 19, 2019"
+output: pdf_document
+---
+
+#Abstract
+
+#Method
+#Result
+#Conclusion
+
+\pagebreak
