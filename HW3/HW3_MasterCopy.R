@@ -19,14 +19,41 @@ library(rpart.plot)
 library(party)
 library(ggsci)
 library(Hmisc)
+library(lattice)
 
 #Load Data
 df<-read.csv("Data1.txt")
 
 #Plot with bin size = 4000
-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 4000)
+a<-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 3000)
+b<-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 4500)
+c<-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 6000)
+grid.arrange(a,b,c,ncol=3)
+
+#These are the MLE for lambda with different bin sizes 
+cut_3000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=3000), dig.lab =7)))
+mean(cut_3000$Freq)
+#3.87
+
+cut_4500<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=4500), dig.lab =7)))
+mean(cut_4500$Freq)
+#5.78
+
+cut_6000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=6000), dig.lab =7)))
+mean(cut_6000$Freq)
+#7.74
+
+stripplot(df$location)
+
+
 
 #Create column that give distance between Palindrome
 df$location_lag <- Lag(df$location, 1)
 df$distance <- df$location-df$location_lag
 df$location_lag<-NULL
+ggplot(df, aes(x=distance)) + geom_histogram(bins=30)
+
+#Test is this follows exponential distribution
+#This is the estimated parameter for the estimated distribution  
+294/sum(df$distance, na.rm = T)
+#Now apply chi square 
