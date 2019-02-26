@@ -12,3 +12,48 @@ output: pdf_document
 #Conclusion
 
 \pagebreak
+
+#Data
+```{r, include=F, message=F}
+ path<-"C:/Users/buwen/"
+setwd(paste0(path,'Documents/Git/M189WI2019/HW3'))
+
+#Load dependencies
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(stargazer)
+library(tree)
+library(rattle)
+library(rpart)
+library(rpart.plot)
+library(party)
+library(ggsci)
+library(Hmisc)
+library(lattice)
+library(knitr)
+
+#Load Data
+df<-read.csv("Data1.txt")
+```
+
+
+```{r}
+MLE_df <- data.frame(binwidth = c(3000, 4500, 6000, 10000),
+                 value = c(3.87, 5.78, 7.74, 12.73))
+
+knitr::kable(MLE_df,
+             row.names = FALSE,
+             col.names = c("Bin Width", "$\\hat{\\lambda}$"), booktabs = TRUE, caption = "MLE of $\\hat{\\lambda}$", escape = FALSE)
+```
+
+
+
+
+#Poisson
+$P\left( x \right) = \frac{{e^{ - \lambda } \lambda ^x }}{{x!}}$
+
+$\displaystyle {\mathcal{L}}({\lambda}\:;x\:) = \prod_{n=1}^{\infty}a_n$
+
+$\hat{\lambda}$
