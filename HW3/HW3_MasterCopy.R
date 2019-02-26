@@ -20,47 +20,53 @@ library(party)
 library(ggsci)
 library(Hmisc)
 library(lattice)
+library(knitr)
 
 #Load Data
 df<-read.csv("Data1.txt")
 
 
-#####PART 1######
+########PART 1#########
 
 #Some histograms with various bin widths for our data
-#Plot with bin size = 4000
 a<-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 3000)
 b<-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 4500)
 c<-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 6000)
 d<-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 10000)
 grid.arrange(a,b,c,d, ncol=4)
 
+#Strip plot of original location of palindromes
+stripplot(df$location)
 
-N<-229354
-n<-296
+####Generation process###
+N<-229354 #Length of CMV
+n<-296 #Number of palindromes
 
 #Random Scatter
 set.seed(n)
 df$scatter_rand<-sort(sample.int(N, n), decreasing = FALSE)
+
+#Strip plot of scattered palindromes
 stripplot(df$scatter) 
 random_plot<-ggplot(df, aes(x=scatter_rand)) + geom_histogram(binwidth=10000)
 
-#Uniform
-set.seed(n)
-unif_quant <- seq(-3,3, length.out=N)
-df$scatter_unif<-sample.int(N, size=n, prob=dunif(unif_quant, min = -3, max=3))
-uniform_plot<-ggplot(df, aes(x=scatter_unif)) + geom_histogram(binwidth=10000)
+#Monte Carlo Uniform Simulation
+B <- 1000 # 1000 bootstrap uniform samples
+PalindromeMC <- data.frame(matrix(data = NA, ncol = B, nrow = n))
+PalindromeMC_mean <- rep(0,B)
+for (i in 1:B) {
+  #Fill ith column with n samples and sort them from lowest to highest
+  PalindromeMC[,i] <- sort(sample.int(N,n), decreasing=FALSE)
+  PalindromeMC_mean[i] <- mean(PalindromeMC[,i])
+}
 
 
-# #Poisson
-# set.seed(n)
-# poisson_quant <-seq(0, 100, length.out = N)
-# df$scatter_poisson <- sample.int(N, size=n, prob=dpois(poisson_quant,5.78))
-# 
-# df$scatter_poisson<-rpois(10, 10)
-# poisson_plot<-ggplot(df, aes(x=scatter_poisson)) + geom_histogram(binwidth=10000)
-# 
-# grid.arrange(random_plot, uniform_plot, poisson_plot)
+#Bind mean into df
+PalindromeMC_mean<-as.data.frame(PalindromeMC_mean)
+
+#Plot the means
+ggplot(PalindromeMC_mean, aes(x=PalindromeMC_mean)) + geom_histogram(binwidth = 1000)
+
 
 
 
@@ -93,22 +99,41 @@ grid.arrange(pair,triplet,quint)
 ####Part 3 Counts
 #These are the MLE for lambda with different bin sizes 
 cut_3000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=3000), dig.lab =7)))
-mean(cut_3000$Freq)
+c3m<-round(mean(cut_3000$Freq),2)
 #3.87
 
 cut_4500<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=4500), dig.lab =7)))
-mean(cut_4500$Freq)
+c4m<-round(mean(cut_4500$Freq),2)
 #5.78
 
 cut_6000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=6000), dig.lab =7)))
-mean(cut_6000$Freq)
+c6m<-round(mean(cut_6000$Freq),2)
 #7.74
+
+cut_10000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=10000), dig.lab =7)))
+c10m<-round(mean(cut_10000$Freq),2)
+#12.73
+
+#Table that organizes these MLE results
+MLE_df <- data.frame(binwidth = c(3000, 4500, 6000, 10000),
+                     value = c(c3m, c4m, c6m, c10m))
+
+knitr::kable(MLE_df,
+             row.names = FALSE,
+             col.names = c("Bin Width", "$\\hat{\\lambda}$"), booktabs = TRUE,
+             caption = "MLE of $\\hat{\\lambda}$", escape = FALSE)
+
+
+
 
 
 
 #Test is this follows exponential distribution
 #This is the estimated parameter for the estimated distribution  
-294/sum(df$distance, na.rm = T)
+294/sum(df$distance_pair, na.rm = T)
+294/sum(df$distance_triplet, na.rm = T)
+294/sum(df$distance_quint, na.rm = T)
+
 #Now apply chi square 
 
 
