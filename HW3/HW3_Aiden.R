@@ -69,37 +69,33 @@ library(OneR)
 
 nbins = 57
 lambda.hat = dim(df)[1]/nbins
-bin=bin(df, nbins, label = c(1:57))
+bin=bin(df$location, nbins, label = c(1:57))
 
 
-boot = function(x, B, nbins)
+boot = function(x, nbins)
 {
   p = numeric(B)
-  mean.x = mean(x)
-  sd.x = sd(x)
-  bin = bin(x, nbins)
-  
+
   # max # of palindromes out of all bins
   max.bin = 0
-  
+  where.cluster.is = 1
   for (i in 1:nbins)
   {
     if(max.bin < length(which(bin == i)))
     {
       max.bin = length(which(bin == i))
+      where.cluster.is = i
     }
+    
+    
   }
 
   p[i] = 1 - pexp(max.bin, 1/lambda.hat)^57
   
-  pval = sum(p)/B
-  return(pval)
+  pval = sum(p)/nbins
+  return(c(pval, where.cluster.is))
 }
 
-B = 1000
-boot(df$location, B, nbins)
-
-
-
+boot(df$location, nbins)
 
 
