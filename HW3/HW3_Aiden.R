@@ -63,11 +63,13 @@ ggplot(df, aes(x=distance)) + geom_histogram(bins=30)
 
 
 ################
-## simulation ##
+## simulation (part 4) ##
 ################
 library(OneR)
 
-bin=bin(df, 57, label = c(1:57))
+nbins = 57
+lambda.hat = dim(df)[1]/nbins
+bin=bin(df, nbins, label = c(1:57))
 
 
 boot = function(x, B, nbins)
@@ -96,6 +98,7 @@ boot = function(x, B, nbins)
 
 B = 1000
 boot(df$location, B, nbins)
+
 
 
 
