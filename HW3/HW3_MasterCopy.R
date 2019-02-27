@@ -21,6 +21,7 @@ library(ggsci)
 library(Hmisc)
 library(lattice)
 library(knitr)
+library(purrr)
 
 #Load Data
 df<-read.csv("Data1.txt")
@@ -60,6 +61,17 @@ for (i in 1:B) {
   PalindromeMC_mean[i] <- mean(PalindromeMC[,i])
 }
 
+
+#Another version of Monte Carlo Simulation 
+unifMC<-rep(0,296)
+for(i in 1:296){
+  unifMC[i]<-rdunif(1, N, 1)
+}
+
+#Sort values 
+unifMC<-sort(unifMC, decreasing=FALSE)
+unifMC<-as.data.frame(unifMC)
+ggplot(unifMC, aes(x=unifMC)) + geom_histogram(binwidth = 4500)
 
 #Bind mean into df
 PalindromeMC_mean<-as.data.frame(PalindromeMC_mean)
