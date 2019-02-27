@@ -22,6 +22,8 @@ library(Hmisc)
 library(lattice)
 library(knitr)
 library(purrr)
+library(OneR)
+library(nnet)
 
 #Load Data
 df<-read.csv("Data1.txt")
@@ -44,25 +46,8 @@ N<-229354 #Length of CMV
 n<-296 #Number of palindromes
 
 #Random Scatter
-set.seed(n)
-df$scatter_rand<-sort(sample.int(N, n), decreasing = FALSE)
-
-#Strip plot of scattered palindromes
-stripplot(df$scatter) 
-random_plot<-ggplot(df, aes(x=scatter_rand)) + geom_histogram(binwidth=10000)
-
-#Monte Carlo Uniform Simulation
-B <- 1000 # 1000 bootstrap uniform samples
-PalindromeMC <- data.frame(matrix(data = NA, ncol = B, nrow = n))
-PalindromeMC_mean <- rep(0,B)
-for (i in 1:B) {
-  #Fill ith column with n samples and sort them from lowest to highest
-  PalindromeMC[,i] <- sort(sample.int(N,n), decreasing=FALSE)
-  PalindromeMC_mean[i] <- mean(PalindromeMC[,i])
-}
-
-
 #Another version of Monte Carlo Simulation 
+set.seed(1)
 unifMC<-rep(0,296)
 for(i in 1:296){
   unifMC[i]<-rdunif(1, N, 1)
@@ -71,13 +56,88 @@ for(i in 1:296){
 #Sort values 
 unifMC<-sort(unifMC, decreasing=FALSE)
 unifMC<-as.data.frame(unifMC)
-ggplot(unifMC, aes(x=unifMC)) + geom_histogram(binwidth = 4500)
+unifMC_p1<-ggplot(unifMC, aes(x=unifMC)) + geom_histogram(binwidth = 4500)
 
-#Bind mean into df
-PalindromeMC_mean<-as.data.frame(PalindromeMC_mean)
+set.seed(11)
+unifMC<-rep(0,296)
+for(i in 1:296){
+  unifMC[i]<-rdunif(1, N, 1)
+}
 
-#Plot the means
-ggplot(PalindromeMC_mean, aes(x=PalindromeMC_mean)) + geom_histogram(binwidth = 1000)
+#Sort values 
+unifMC<-sort(unifMC, decreasing=FALSE)
+unifMC<-as.data.frame(unifMC)
+unifMC_p2<-ggplot(unifMC, aes(x=unifMC)) + geom_histogram(binwidth = 4500)
+
+set.seed(20)
+unifMC<-rep(0,296)
+for(i in 1:296){
+  unifMC[i]<-rdunif(1, N, 1)
+}
+
+#Sort values 
+unifMC<-sort(unifMC, decreasing=FALSE)
+unifMC<-as.data.frame(unifMC)
+unifMC_p3<-ggplot(unifMC, aes(x=unifMC)) + geom_histogram(binwidth = 4500)
+
+#Add title later, but this is orginal compared to 3 samples
+#Change colors and add titles later
+grid.arrange(b,unifMC_p1,unifMC_p2,unifMC_p3, ncol=4)
+
+
+# 
+# 
+# 
+# 
+# df$scatter_rand<-sort(sample.int(N, n), decreasing = FALSE)
+# 
+# #Strip plot of scattered palindromes
+# stripplot(df$scatter) 
+# random_plot<-ggplot(df, aes(x=scatter_rand)) + geom_histogram(binwidth=10000)
+# 
+# #Monte Carlo Uniform Simulation
+# 
+# B <- 1000 # 1000 MC uniform samples
+# PalindromeMC <- data.frame(matrix(data = NA, ncol = B, nrow = n))
+# PalindromeMC_mean <- rep(0,B)
+# 
+# bin_df<-data.frame(matrix(data=NA, ncol=))
+# for (i in 1:B) {
+#   t = numeric(B)
+#   #Fill ith column with n samples and sort them from lowest to highest
+#   PalindromeMC[,i] <- sort(rdunif(n, N, 1), decreasing=FALSE)
+#   PalindromeMC_mean[i] <- mean(PalindromeMC[,i])
+#                               
+# }
+# 
+# nbins = 57
+# #Average of palindromes in the bin
+# freq<-0
+# for(i in 1:B){
+#   freq <- freq + as.data.frame(table(bin(PalindromeMC[,i], nbins, label = c(1:nbins))))$Freq
+# }
+# 
+# Palindrome_freq_mean <- freq/B
+# 
+# 
+# #Change mean vectorinto df
+# PalindromeMC_mean<-as.data.frame(PalindromeMC_mean)
+# 
+# #Plot the means
+# ggplot(PalindromeMC_mean, aes(x=PalindromeMC_mean)) + geom_histogram(binwidth = 1000)
+# 
+# #Another version of Monte Carlo Simulation 
+# unifMC<-rep(0,296)
+# for(i in 1:296){
+#   unifMC[i]<-rdunif(1, N, 1)
+# }
+# 
+# #Sort values 
+# unifMC<-sort(unifMC, decreasing=FALSE)
+# unifMC<-as.data.frame(unifMC)
+# ggplot(unifMC, aes(x=unifMC)) + geom_histogram(binwidth = 4500)
+
+
 
 
 
@@ -105,10 +165,13 @@ quint<-ggplot(df, aes(x=distance_quint)) + geom_histogram(bins=30)
 
 grid.arrange(pair,triplet,quint)
 
+#Do the same thing for the MC samples, then arrange these into a 3x3 grid possibly usingfacet wrap?
 
 
 
-####Part 3 Counts
+
+
+####Part 4 clusters
 #These are the MLE for lambda with different bin sizes 
 cut_3000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=3000), dig.lab =7)))
 c3m<-round(mean(cut_3000$Freq),2)
@@ -148,13 +211,38 @@ knitr::kable(MLE_df,
 
 #Now apply chi square 
 
+test<-as.data.frame(table(bin(df$location, 12, label=c(1:12))))$Freq
+
+chisq.test(test)
 
 
 
 
-#use for later 
-set.seed(1)
-unif_scatter<-sample(c(0,1), size=229354, replace=TRUE, prob=c(229058/229354,296/229354))
-unif_scatter_location<-as.data.frame((which(unif_scatter==1)))
-colnames(unif_scatter_location)<-"location"
-ggplot(unif_scatter_location, aes(x=location)) +  geom_histogram(binwidth = 4500)
+#####Addtional hypothesis (need to fix)
+df2<-read.csv("Data2.csv")
+
+#Create binaries
+df2$hiv_binary <- ifelse(df2$hiv == "positive", 1, 0)
+df2$sex<-ifelse(df2$"ï..sex" =="Male",1,0) #Male 1; Female 0
+df2$sex <- factor(df2$sex)
+
+df2$cmv_tertile_4cat <- ifelse(df2$cmv_tertile == "Negative", 0,
+                               ifelse(df2$cmv_tertile == "Low", 1,
+                                      ifelse(df2$cmv_tertile == "Medium", 2, 3)))
+df2$cmv_tertile_4cat<-factor(df2$cmv_tertile_4cat)
+test21<-glm(hiv_binary~cmv_tertile_4cat, data=df2, family=binomial())
+test21predict<-as.data.frame(predict(test21))
+
+HCMV IgG OD (as the dependent variable) and sex, HIV and TB status 
+test9<-glm(cmv~, data=df2) 
+             #sex + hiv_binary, data=df2)
+test9<-predict(test9)
+df3<-cbind(df2, test9)
+
+
+# #use for later 
+# set.seed(1)
+# unif_scatter<-sample(c(0,1), size=229354, replace=TRUE, prob=c(229058/229354,296/229354))
+# unif_scatter_location<-as.data.frame((which(unif_scatter==1)))
+# colnames(unif_scatter_location)<-"location"
+# ggplot(unif_scatter_location, aes(x=location)) +  geom_histogram(binwidth = 4500)
