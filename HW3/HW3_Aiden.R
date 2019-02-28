@@ -90,12 +90,15 @@ boot = function(x, nbins)
     
   }
 
-  p[i] = 1 - pexp(max.bin, 1/lambda.hat)^57
+  p[i] = 1 - ppois(max.bin, lambda.hat)^57
   
   pval = sum(p)/nbins
-  return(c(pval, where.cluster.is))
+  return(c(pval, (where.cluster.is), as.integer(max.bin)))
 }
 
 boot(df$location, nbins)
 
 
+# create a new df without bin 24 
+# then try to use the new max
+# to determine if that is also a large cluster
