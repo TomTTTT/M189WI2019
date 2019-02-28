@@ -32,140 +32,116 @@ df<-read.csv("Data1.txt")
 ########PART 1#########
 
 #Some histograms with various bin widths for our data
-a<-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 3000)
-b<-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 4500)
-c<-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 6000)
-d<-ggplot(df, aes(x=location)) + geom_histogram(binwidth = 10000)
-grid.arrange(a,b,c,d, ncol=4)
+binlist<-c(3000,4500,6000,10000)
+for(i in binlist){
+  eval(parse(text=paste0("
+  cmv_p_",i,"<-ggplot(df, aes(x=location)) +
+  geom_histogram(color='black', fill='red', binwidth = ",i,", position = 'dodge', alpha=0.5) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5), 
+        axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x = 'Letter Index', y='Count', title = 'CMV Palindrome Location',
+                         subtitle='Bin Width = ",i,"') +
+  scale_x_continuous(breaks = seq(0, 229354, 25000))
+                         "))) 
+}
+grid.arrange(cmv_p_3000,cmv_p_4500,cmv_p_6000,cmv_p_10000)
+
 
 #Strip plot of original location of palindromes
-stripplot(df$location)
+stripplot(df$location, jitter=0.1, offset=1/3, main="Location of Palindromes", xlab="Letter Index")
 
+#Let's generate a few Monte Carlo Samples
 ####Generation process###
 N<-229354 #Length of CMV
 n<-296 #Number of palindromes
 
 #Random Scatter
 #Another version of Monte Carlo Simulation 
-set.seed(1)
-unifMC<-rep(0,296)
-for(i in 1:296){
-  unifMC[i]<-rdunif(1, N, 1)
+
+
+#Loop that does random scatter and generates plot
+for(j in 1:3){
+
+  #Set seed
+  set.seed(j)
+
+  #Create empty vector
+  eval(parse(text=paste0("unifMC_",j,"<-rep(0,296)")))
+  
+  #Uniform MC generation
+  for(i in 1:296){
+    eval(parse(text=paste0("unifMC_",j,"[i]<-rdunif(1, N, 1)")))
+  }
+
+#Sort values and put it into dataframe
+eval(parse(text=paste0("unifMC_",j,"<-sort(unifMC_",j,", decreasing=FALSE)")))
+eval(parse(text=paste0("unifMC_",j,"<-as.data.frame(unifMC_",j,")")))
+
+#Rename the location column 
+eval(parse(text=paste0("colnames(unifMC_",j,")[1] <- 'location'")))
+
+#Create plot
+eval(parse(text=paste0("
+unifMC_p",j,"<-ggplot(unifMC_",j,", aes(x=location)) +
+  geom_histogram(color='black', fill='blue', binwidth = 4500, position = 'dodge', alpha=0.5) + 
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5), 
+        axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x = 'Letter Index', y='Count', title = 'CMV Palindrome Location',
+       subtitle='Uniform Scatter: Iteration ",j,"') +
+  scale_x_continuous(breaks = seq(0, 229354, 25000))
+")))
 }
 
-#Sort values 
-unifMC<-sort(unifMC, decreasing=FALSE)
-unifMC<-as.data.frame(unifMC)
-unifMC_p1<-ggplot(unifMC, aes(x=unifMC)) + geom_histogram(binwidth = 4500)
-
-set.seed(11)
-unifMC<-rep(0,296)
-for(i in 1:296){
-  unifMC[i]<-rdunif(1, N, 1)
-}
-
-#Sort values 
-unifMC<-sort(unifMC, decreasing=FALSE)
-unifMC<-as.data.frame(unifMC)
-unifMC_p2<-ggplot(unifMC, aes(x=unifMC)) + geom_histogram(binwidth = 4500)
-
-set.seed(20)
-unifMC<-rep(0,296)
-for(i in 1:296){
-  unifMC[i]<-rdunif(1, N, 1)
-}
-
-#Sort values 
-unifMC<-sort(unifMC, decreasing=FALSE)
-unifMC<-as.data.frame(unifMC)
-unifMC_p3<-ggplot(unifMC, aes(x=unifMC)) + geom_histogram(binwidth = 4500)
-
-#Add title later, but this is orginal compared to 3 samples
-#Change colors and add titles later
-grid.arrange(b,unifMC_p1,unifMC_p2,unifMC_p3, ncol=4)
-
-
-# 
-# 
-# 
-# 
-# df$scatter_rand<-sort(sample.int(N, n), decreasing = FALSE)
-# 
-# #Strip plot of scattered palindromes
-# stripplot(df$scatter) 
-# random_plot<-ggplot(df, aes(x=scatter_rand)) + geom_histogram(binwidth=10000)
-# 
-# #Monte Carlo Uniform Simulation
-# 
-# B <- 1000 # 1000 MC uniform samples
-# PalindromeMC <- data.frame(matrix(data = NA, ncol = B, nrow = n))
-# PalindromeMC_mean <- rep(0,B)
-# 
-# bin_df<-data.frame(matrix(data=NA, ncol=))
-# for (i in 1:B) {
-#   t = numeric(B)
-#   #Fill ith column with n samples and sort them from lowest to highest
-#   PalindromeMC[,i] <- sort(rdunif(n, N, 1), decreasing=FALSE)
-#   PalindromeMC_mean[i] <- mean(PalindromeMC[,i])
-#                               
-# }
-# 
-# nbins = 57
-# #Average of palindromes in the bin
-# freq<-0
-# for(i in 1:B){
-#   freq <- freq + as.data.frame(table(bin(PalindromeMC[,i], nbins, label = c(1:nbins))))$Freq
-# }
-# 
-# Palindrome_freq_mean <- freq/B
-# 
-# 
-# #Change mean vectorinto df
-# PalindromeMC_mean<-as.data.frame(PalindromeMC_mean)
-# 
-# #Plot the means
-# ggplot(PalindromeMC_mean, aes(x=PalindromeMC_mean)) + geom_histogram(binwidth = 1000)
-# 
-# #Another version of Monte Carlo Simulation 
-# unifMC<-rep(0,296)
-# for(i in 1:296){
-#   unifMC[i]<-rdunif(1, N, 1)
-# }
-# 
-# #Sort values 
-# unifMC<-sort(unifMC, decreasing=FALSE)
-# unifMC<-as.data.frame(unifMC)
-# ggplot(unifMC, aes(x=unifMC)) + geom_histogram(binwidth = 4500)
-
-
-
+#Use this graph in markdown 
+grid.arrange(cmv_p_4500,unifMC_p1,unifMC_p2,unifMC_p3, ncol=4)
 
 
 
 
 ####Part 2 Locations and spacings 
 
-#Create column that gives distance between pairs of Palindromes
-df$location_lag <- Lag(df$location, 1)
-df$distance_pair<- df$location-df$location_lag
-df$location_lag<-NULL
-pair<-ggplot(df, aes(x=distance_pair)) + geom_histogram(bins=30)
+#Create column that gives distance between pairs, triplets, quintuples of Palindromes
 
-#Create column that gives distance between triplets of Palindromes
-df$location_lag <- Lag(df$location, 2)
-df$distance_triplet <- df$location-df$location_lag
-df$location_lag<-NULL
-triplet<-ggplot(df, aes(x=distance_triplet)) + geom_histogram(bins=30)
+#List of dataframes to loop through
+dataframelist<-c("df", "unifMC_1","unifMC_2","unifMC_3")
 
-#Create column that gives distance between quintuples of Palindromes 
-df$location_lag <- Lag(df$location, 5)
-df$distance_quint <- df$location-df$location_lag
-df$location_lag<-NULL
-quint<-ggplot(df, aes(x=distance_quint)) + geom_histogram(bins=30)
+for(i in dataframelist){
+  eval(parse(text=paste0("
+  #Pair
+  ",i,"$location_lag <- Lag(",i,"$location, 1)
+  ",i,"$distance_pair<- ",i,"$location-",i,"$location_lag
+  ",i,"$location_lag<-NULL
+  ",i,"_pair<-ggplot(",i,", aes(x=distance_pair)) +
+                    geom_histogram(color='black', fill='red',position='dodge',alpha=0.5,bins=30) +
+                    theme(axis.title.x=element_blank(),axis.title.y=element_blank()) 
+  #Triplet
+  ",i,"$location_lag <- Lag(",i,"$location, 2)
+  ",i,"$distance_triplet <- ",i,"$location-",i,"$location_lag
+  ",i,"$location_lag<-NULL
+  ",i,"_triplet<-ggplot(",i,", aes(x=distance_triplet)) + 
+                        geom_histogram(color='black', fill='blue',position='dodge',alpha=0.5,bins=30) + 
+                        theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+  #Quintuples
+  ",i,"$location_lag <- Lag(",i,"$location, 5)
+  ",i,"$distance_quint <- ",i,"$location-",i,"$location_lag
+  ",i,"$location_lag<-NULL
+  ",i,"_quint<-ggplot(",i,", aes(x=distance_quint)) + 
+                      geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=30) +
+                      theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+  ")))
+}
 
-grid.arrange(pair,triplet,quint)
 
-#Do the same thing for the MC samples, then arrange these into a 3x3 grid possibly usingfacet wrap?
+#Arrange all plots into 4x3 matrix
+grid.arrange(arrangeGrob(df_pair, unifMC_1_pair, unifMC_2_pair, unifMC_3_pair,nrow=4, top="Pair"),
+arrangeGrob(df_triplet, unifMC_2_triplet, unifMC_2_triplet, unifMC_3_triplet,nrow=4, top="Triplet"),
+arrangeGrob(df_quint, unifMC_1_quint, unifMC_2_quint, unifMC_3_quint,nrow=4, top="Quintuple"), 
+bottom=textGrob("Letter Index", gp=gpar(fontsize=15)),
+left = textGrob("Count", rot = 90, vjust = 0.2, gp=gpar(fontsize=15)), ncol=3,as.table = FALSE)
+
+
 
 
 
