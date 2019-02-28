@@ -39,27 +39,26 @@ for(i in binlist){
   geom_histogram(color='black', fill='red', binwidth = ",i,", position = 'dodge', alpha=0.5) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5), 
-        axis.text.x = element_text(angle = 60, hjust = 1)) +
-  labs(x = 'Letter Index', y='Count', title = 'CMV Palindrome Location',
-                         subtitle='Bin Width = ",i,"') +
+        axis.text.x = element_text(angle = 60, hjust = 1),
+        axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  labs(x = 'DNA Base Pair Index', subtitle='Bin Width = ",i," base pairs') +
   scale_x_continuous(breaks = seq(0, 229354, 25000))
                          "))) 
 }
-grid.arrange(cmv_p_3000,cmv_p_4500,cmv_p_6000,cmv_p_10000)
+grid.arrange(cmv_p_3000,cmv_p_4500,cmv_p_6000,cmv_p_10000, bottom=textGrob("Letter Index", gp=gpar(fontsize=15)),
+             left = textGrob("Count", rot = 90, vjust = 0.4, gp=gpar(fontsize=15)), 
+             top=textGrob("CMV Palindrome Locations with Different Bin Withs ",gp=gpar(fontsize=20)))
 
 
 #Strip plot of original location of palindromes
-stripplot(df$location, jitter=0.1, offset=1/3, main="Location of Palindromes", xlab="Letter Index")
+strip_df<-stripplot(df$location, jitter=0.1, offset=1/3,xlab="", main="Original Data")
 
 #Let's generate a few Monte Carlo Samples
-####Generation process###
+####Generation process###vv
 N<-229354 #Length of CMV
 n<-296 #Number of palindromes
 
-#Random Scatter
-#Another version of Monte Carlo Simulation 
-
-
+##Random Scatter
 #Loop that does random scatter and generates plot
 for(j in 1:3){
 
@@ -81,21 +80,42 @@ eval(parse(text=paste0("unifMC_",j,"<-as.data.frame(unifMC_",j,")")))
 #Rename the location column 
 eval(parse(text=paste0("colnames(unifMC_",j,")[1] <- 'location'")))
 
-#Create plot
+#Create plots of simulated palindrome locations
 eval(parse(text=paste0("
 unifMC_p",j,"<-ggplot(unifMC_",j,", aes(x=location)) +
   geom_histogram(color='black', fill='blue', binwidth = 4500, position = 'dodge', alpha=0.5) + 
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5), 
-        axis.text.x = element_text(angle = 60, hjust = 1)) +
-  labs(x = 'Letter Index', y='Count', title = 'CMV Palindrome Location',
+        axis.text.x = element_text(angle = 60, hjust = 1), axis.title.y=element_blank(), axis.title.x=element_blank()) +
+  labs(title = 'CMV Palindrome Location',
        subtitle='Uniform Scatter: Iteration ",j,"') +
-  scale_x_continuous(breaks = seq(0, 229354, 25000))
+  scale_x_continuous(breaks = seq(0, 229354, 25000)) 
+
 ")))
+eval(parse(text=paste0("strip_",j,"<-stripplot(df$location, jitter=0.1, offset=1/3, xlab='', main = 'Iteration ",j,"')")))
+}
+
+grid.arrange(strip_df, strip_1, strip_2, strip_3)
+
+#Use histograms from original data, but remove x/y axis titles from the plots
+binlist<-c(3000,4500,6000,10000)
+for(i in binlist){
+  eval(parse(text=paste0("
+                         cmv_p_",i,"<-ggplot(df, aes(x=location)) +
+                         geom_histogram(color='black', fill='red', binwidth = ",i,", position = 'dodge', alpha=0.5) +
+                         theme(plot.title = element_text(hjust = 0.5),
+                         plot.subtitle = element_text(hjust = 0.5), 
+                         axis.text.x = element_text(angle = 60, hjust = 1),
+                         axis.title.x=element_blank(), axis.title.y=element_blank()) +
+                         labs(x = 'DNA Base Pair Index', title = 'CMV Palindrome Location',
+                         subtitle='Bin Width = ",i,"') +
+                         scale_x_continuous(breaks = seq(0, 229354, 25000))
+                         "))) 
 }
 
 #Use this graph in markdown 
-grid.arrange(cmv_p_4500,unifMC_p1,unifMC_p2,unifMC_p3, ncol=4)
+grid.arrange(cmv_p_4500,unifMC_p1,unifMC_p2,unifMC_p3, bottom=textGrob("DNA Base Pair Index", gp=gpar(fontsize=15)),
+             left = textGrob("Count", rot = 90, vjust = 0.4, gp=gpar(fontsize=15)), ncol=2,nrow=2)
 
 
 
