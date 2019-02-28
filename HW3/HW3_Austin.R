@@ -143,6 +143,42 @@ grid.arrange(arrangeGrob(df_pair, unifMC_1_pair, unifMC_2_pair, unifMC_3_pair,nr
              bottom=textGrob("Letter Index", gp=gpar(fontsize=15)),
              left = textGrob("Count", rot = 90, vjust = 0.2, gp=gpar(fontsize=15)), ncol=3,as.table = FALSE)
 
+######################################
+############## Part 3 ################
+######################################
+
+chisqtable <- function(n.region, site, N){
+  n <- length(site)
+  # lambda estimate
+  lambda.est <- n/n.region
+  # cut into n.region number of non-overlapping intervals
+  count.int <- table(cut(site, breaks = seq(1, length(gene), length.out=n.region+1), include.lowest=TRUE))
+  # get the count levels range
+  count.vector <- as.vector(count.int)
+  count.range <- max(count.vector) - min(count.vector) + 1
+  # create contingency table
+  table <- matrix(rep(NA, count.range*3), count.range, 3)
+  for (i in 1:count.range){
+    offset <- min(count.vector) - 1
+    # first column = count level
+    table[i, 1] <- i + offset
+    # second column = observed count
+    table[i, 2] <- sum(count.vector == i + offset)
+    # third column = expected count
+    if ((i + offset == min(count.vector)) && (min(count.vector) != 0))
+      table[i, 3] <- ppois(i+offset, lambda.est)*n.region
+    else if (i + offset == max(count.vector))
+      table[i, 3] <- (1 - ppois(i + offset - 1, lambda.est))*n.region
+    else
+      table[i, 3] <- (ppois(i+offset, lambda.est) - ppois(i + offset - 1, lambda.est))*n.region
+  }
+  return (table)
+}
+
+bins3000.table<- chisqtable(76, cut_3000$Freq, length(df$location))
+
+
+
 
 
 
@@ -189,10 +225,12 @@ knitr::kable(MLE_df,
 
 #Now apply chi square 
 
-test<-as.data.frame(table(bin(df$location, 12, label=c(1:12))))$Freq
+#test<-as.data.frame(table(bin(df$location, 12, label=c(1:12))))$Freq
+#chisq.test(test)
 
-chisq.test(test)
 
+######P-values with Poisson###
+pr=1- ppois(14, 3.87,lower.tail =TRUE)
 
 
 
