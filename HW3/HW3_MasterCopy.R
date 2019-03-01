@@ -150,8 +150,6 @@ df_quint<-ggplot(df, aes(x=distance_quint)) +
   geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=30) +
   theme(axis.title.x=element_blank(),axis.title.y=element_blank())
 
-
-
 #List of dataframes to loop through for the simluations
 dataframelist<-c("unifMC_1","unifMC_2","unifMC_3")
 
