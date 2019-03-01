@@ -1,11 +1,28 @@
+---
+title: "Unusual Cluster in the Palindrome"
+author: "Benson Wu"
+date: "February 19, 2019"
+output: pdf_document
+---
+
+#Abstract
+
+#Method
+#Result
+#Conclusion
+
+\pagebreak
+
+
+
+```{r, echo=F,message=FALSE, warning=FALSE}
 # Load working directory
 # Enter your own path in the quotes in the path variable
 # path<-"/Users/Timlee/"
 # setwd("C:/Users/Aiden/Documents/GitHub/M189WI2019/HW3")
 # setwd('C:/Users/buwen/OneDrive/Desktop/MATH 189/HW2')
-# path<-"C:/Users/buwen/"
+path<-"C:/Users/buwen/"
 setwd(paste0(path,'Documents/Git/M189WI2019/HW3'))
-
 #Load dependencies
 library(dplyr)
 library(ggplot2)
@@ -24,13 +41,16 @@ library(knitr)
 library(purrr)
 library(OneR)
 library(nnet)
-
 #Load Data
 df<-read.csv("Data1.txt")
+```
 
+#Background
+DNA has a double helix structure made of two long chains of nucleotides. Each nucleotide is composed of a sugar, a phosphate and a base. The bases have four types: adenine (A), cytosine (C) , guanine (G), and thymine (T). In this analysis, we look particularly at the DNA sequence of Human cytomegalovirus (CMV). CMV is a common virus that infects people of all ages. When CMV is in a person's body, it stays there for life, but most people infected with CMV show no signs or symptoms. However, CMV infection can cause grave health problems for people with weakened immune systems and for unborn babies. Our data set contains the locations of 296 palindromes of length greater than 10 found in a particular CMV DNA sequence that is 229,354 letters long. It is hypothesized that being able to find origins of replication through The following figures show the distribution of palindromes across the DNA sequence with respect to different interval widths. We can see that the clusters of palindromes change as we increase the interval widths.  
+  
+  
 
-########PART 1#########
-
+```{r, echo=F,message=FALSE, warning=FALSE}
 #Some histograms with various bin widths for our data
 binlist<-c(3000,4500,6000,10000)
 for(i in binlist){
@@ -45,28 +65,29 @@ for(i in binlist){
   scale_x_continuous(breaks = seq(0, 229354, 25000))
                          "))) 
 }
-
 #Compile into grid
 grid.arrange(cmv_p_3000,cmv_p_4500,cmv_p_6000,cmv_p_10000, bottom=textGrob("Letter Index", gp=gpar(fontsize=15)),
              left = textGrob("Count", rot = 90, vjust = 0.4, gp=gpar(fontsize=15)), 
-             top=textGrob("CMV Palindrome Locations with Different Interval Sizes",gp=gpar(fontsize=20)))
+             top=textGrob("CMV Palindrome Locations with Different Interval Sizes",gp=gpar(fontsize=15,fontface="bold")))
+```
+
+\pagebreak
+
+#Random Scatter
+We first begin by performing a random scatter through Monte Carlo uniform sampling to scatter 296 palindromes across a DNA sequence of 229,354 base pairs. Three simulations were done in order to ensure randomness. The simulations are compared visually compared to the location of palindromes in our original data. The following plot shows the 2D scatter of palindromes across the original DNA sequence and the simulated palindrome locations. 
 
 
-#Strip plot of original location of palindromes
-strip_df<-stripplot(df$location, jitter=0.1, offset=1/3,xlab="", main="Original Data")
-
+```{r, echo=F,message=FALSE, warning=FALSE}
+########PART 1#########
 #Let's generate a few Monte Carlo Samples
 ####Generation process###
 N<-229354 #Length of CMV
 n<-296 #Number of palindromes
-
 ##Random Scatter
 #Loop that does random scatter and generates plot
 for(j in 1:3){
-
   #Set seed
   set.seed(j)
-
   #Create empty vector
   eval(parse(text=paste0("unifMC_",j,"<-rep(0,296)")))
   
@@ -74,14 +95,11 @@ for(j in 1:3){
   for(i in 1:296){
     eval(parse(text=paste0("unifMC_",j,"[i]<-rdunif(1, N, 1)")))
   }
-
 #Sort values and put it into dataframe
 eval(parse(text=paste0("unifMC_",j,"<-sort(unifMC_",j,", decreasing=FALSE)")))
 eval(parse(text=paste0("unifMC_",j,"<-as.data.frame(unifMC_",j,")")))
-
 #Rename the location column 
 eval(parse(text=paste0("colnames(unifMC_",j,")[1] <- 'location'")))
-
 #Create plots of simulated palindrome locations
 eval(parse(text=paste0("
 unifMC_p",j,"<-ggplot(unifMC_",j,", aes(x=location)) +
@@ -92,13 +110,9 @@ unifMC_p",j,"<-ggplot(unifMC_",j,", aes(x=location)) +
   labs(title = 'CMV Palindrome Location',
        subtitle='Uniform Scatter: Iteration ",j,"') +
   scale_x_continuous(breaks = seq(0, 229354, 25000)) 
-
 ")))
 eval(parse(text=paste0("strip_",j,"<-stripplot(df$location, jitter=0.1, offset=1/3, xlab='', main = 'Iteration ",j,"')")))
 }
-
-grid.arrange(strip_df, strip_1, strip_2, strip_3)
-
 #Use histograms from original data, but remove x/y axis titles from the plots
 binlist<-c(3000,4500,6000,10000)
 for(i in binlist){
@@ -114,19 +128,32 @@ for(i in binlist){
                          scale_x_continuous(breaks = seq(0, 229354, 25000))
                          "))) 
 }
+#Strip plot of original location of palindromes
+strip_df<-stripplot(df$location, jitter=0.1, offset=1/3,xlab="", main="Original Data")
+grid.arrange(strip_df, strip_1, strip_2, strip_3)
+```
+As we can observe, it is hard to tell if there are significant clusters because the simulated palindrome locations seem to be spread evenly across the DNA sequence, indicating that the original data departs from a uniform scatter of palindromes across the DNA sequence.
 
+\pagebreak
+
+The following figure shows the distribution of palindromes across the DNA sequence with the interval size set to 4,500. Again, we see that there is no significant cluster of palindromes in the simulated data unlike the palindrome locations in the original data. This leads us to investigate the location and spacing of palindromes next.
+
+```{r, echo=F,message=FALSE, warning=FALSE}
 #Use this graph in markdown 
 grid.arrange(cmv_p_4500,unifMC_p1,unifMC_p2,unifMC_p3, bottom=textGrob("DNA Base Pair Index", gp=gpar(fontsize=15)),
              left = textGrob("Count", rot = 90, vjust = 0.4, gp=gpar(fontsize=15)), ncol=2,nrow=2)
+```
 
+\pagebreak
 
+#Location and  Spacings
+We examined the spacings between various intervals of palindromes to see if they follow any particular distributions. To ensure replicability, we examined the spacings not only in the original palindrome data, but also in our three palindrome simulations as well. We made the choice to perform this part of the analysis using an interval size of 4,500 DNA base pairs. We compared the distances between pairs, triplets, and decuples. The following figure shows the distributions of the different groupings.  
 
+```{r, echo=F,message=FALSE, warning=FALSE}
 ######################################
 ####Part 2 Locations and spacings#####
 ######################################
-
 #Create column that gives distance between pairs, triplets, quintuples of Palindromes
-
 #Original
 #Pair
 df$location_lag <- Lag(df$location, 1)
@@ -149,10 +176,8 @@ df$location_lag<-NULL
 df_quint<-ggplot(df, aes(x=distance_quint)) + 
   geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=30) +
   theme(axis.title.x=element_blank(),axis.title.y=element_blank())
-
 #List of dataframes to loop through for the simluations
 dataframelist<-c("unifMC_1","unifMC_2","unifMC_3")
-
 for(i in dataframelist){
   eval(parse(text=paste0("
                          #Pair
@@ -178,124 +203,77 @@ for(i in dataframelist){
                          theme(axis.title.x=element_blank(),axis.title.y=element_blank())
                          ")))
 }
-
-
 #Arrange all plots into 4x3 matrix
 grid.arrange(arrangeGrob(df_pair, unifMC_1_pair, unifMC_2_pair, unifMC_3_pair,nrow=4, top="Pair"),
 arrangeGrob(df_triplet, unifMC_2_triplet, unifMC_2_triplet, unifMC_3_triplet,nrow=4, top="Triplet"),
 arrangeGrob(df_quint, unifMC_1_quint, unifMC_2_quint, unifMC_3_quint,nrow=4, top="Decuple"), 
 bottom=textGrob("Letter Index", gp=gpar(fontsize=15)),
 left = textGrob("Count", rot = 90, vjust = 0.2, gp=gpar(fontsize=15)), ncol=3,as.table = FALSE)
+```
 
+As we can see in the figure above, we see the distribution of spacing between pairs of palindromes appears to follow an exponential distribution. We use Maximum Likelihood Estimation to estimate the lambda parameter of the paired spacing in our original data and three simulations, such that we solve for $\hat{\lambda}$ in the first order condition of the log-likelihood function of the exponential distribution. In distribution of spacing between triplets of palindromes, we see that the distribution follows a gamma distribution. And finally, as we look at the distance between 10 palindromes, we see that the distribution of spaces resembles a normal distribution. As we look at the distance between n palindromes for a large n, the distribution of spacings will seemingly converge to a normal distribution. The following table shows the $\hat{\lambda}$ values obtained from MLE.
 
+```{r, echo=F,message=FALSE, warning=FALSE}
 #Estimated Lambda for exponential distributions and generate random deviates and store in respective  dataframe
 set.seed(45)
 dataframelist<-c("df","unifMC_1","unifMC_2","unifMC_3")
 for(i in dataframelist){
   eval(parse(text=paste0(" 
-  print((296-sum(is.na(",i,"$distance_pair)))/sum(",i,"$distance_pair, na.rm = T))
   ",i,"$rexp<-rexp(296, (296-sum(is.na(",i,"$distance_pair)))/sum(",i,"$distance_pair, na.rm = T))
   ")))
 }
-
 #Table that organizes these Poisson MLE results
 Exp_MLE_df <- data.frame(data=c("Original", "Simulation 1","Simulation 2","Simulation 3"), value = c(0.001289471, 0.001312996, 0.001307781, 0.001300281))
-
 knitr::kable(Exp_MLE_df,
              row.names = FALSE,
              col.names = c("Data", "$\\hat{\\lambda}$"), booktabs = TRUE,
              caption = "Exponential MLE of $\\hat{\\lambda}$", escape = FALSE)
+```
+
+\pagebreak
 
 
+```{r, echo=F,message=FALSE, warning=FALSE}
 #Change original df_pair to reflect correct title 
-df_pair<-ggplot(df, aes(x=distance_pair)) +
-  geom_histogram(color='black', fill='red',position='dodge',alpha=0.5, bin=20) +
-  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5)) +
+df_pair<-ggplot(df, aes(x=distance_pair)) + geom_histogram(color='black', fill='red',position='dodge',alpha=0.5, bins=20) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5, size = 10))+
   ggtitle("Original Paired Distance Histogram")
-
-rexp_df<-ggplot(df, aes(x=rexp)) +
-  geom_histogram(color='black', fill='blue',position='dodge',alpha=0.5,bins=20) +
-  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5)) + 
+rexp_df<-ggplot(df, aes(x=rexp)) + geom_histogram(color='black', fill='blue',position='dodge',alpha=0.5,bins=20) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5, size = 10)) + 
   ggtitle(expression(paste("Original w/ ", lambda," = 0.001289471")))
-
-rexp_unifMC_1<-ggplot(unifMC_1, aes(x=rexp)) +
-  geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=20) +
-  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5)) +
+rexp_unifMC_1<-ggplot(unifMC_1, aes(x=rexp)) + geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=20) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5, size = 10)) +
   ggtitle(expression(paste("Sim. 1 w/ ", lambda," =  0.001312996")))
-
-rexp_unifMC_2<-ggplot(unifMC_1, aes(x=rexp)) +
-  geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=20) +
-  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5)) +
+rexp_unifMC_2<-ggplot(unifMC_1, aes(x=rexp)) +geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=20) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5, size = 10)) +
   ggtitle(expression(paste("Sim. 2 w/ ", lambda," =  0.001307781")))
-
-rexp_unifMC_3<-ggplot(unifMC_1, aes(x=rexp)) +
-  geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=20) +
-  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5)) +
+rexp_unifMC_3<-ggplot(unifMC_1, aes(x=rexp)) + geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=20) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5, size = 10))+
   ggtitle(expression(paste("Sim. 3 w/ ", lambda," =  0.001300281")))
-
 #Compile into Grid
 grid.arrange(df_pair, rexp_df, rexp_unifMC_1,rexp_unifMC_2,rexp_unifMC_3,
              bottom=textGrob("Distance Between Pairs", gp=gpar(fontsize=15)),
              left = textGrob("Count", rot = 90, vjust = 0.2, gp=gpar(fontsize=15)),
-             top = textGrob("Distributions of Paired Locations",gp=gpar(fontsize=24)), ncol=3,as.table = FALSE)
+             top = textGrob("Distributions of Paired Locations",gp=gpar(fontsize=24, fontface="bold")), ncol=3,as.table = FALSE)
+```
+
+In the figure above, we can see how a generation of random deviates with the respective estimated $\hat{\lambda}$ compares to the distribution of paired spacing in the original data. Interestingly, we see that for random deviates of the various $\hat{\lambda}$, the behavior of the distributions don't contain as many values in the first interval as expected for an exponential distribution. This leads us to investigate whether the palindrome locations from the original data actually follows a Poisson distribution and whether the paired spacing in the original data actually follows an exponential distribution. 
+
+#Counts
+
+#The Biggest Cluster
+
+\pagebreak
+
+#Theory
+##Maximum Likelihood Estimation
+##Poisson Process
+##Chi-Square Test
 
 
-######################################
-####Part 3############################
-######################################
+#Poisson
+$P\left( x \right) = \frac{{e^{ - \lambda } \lambda ^x }}{{x!}}$
 
+$\displaystyle {\mathcal{L}}({\lambda}\:;x_1\:,..,x_n) = \prod_{i=1}^{\infty}\frac{{e^{ - \lambda } \lambda ^{x_j} }}{{x_j!}}$
 
-#These are the MLE for lambda with different bin sizes 
-cut_3000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=3000), dig.lab =7)))
-c3m<-round(mean(cut_3000$Freq),2)
-#3.87
-
-cut_4500<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=4500), dig.lab =7)))
-c4m<-round(mean(cut_4500$Freq),2)
-#5.78
-
-cut_6000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=6000), dig.lab =7)))
-c6m<-round(mean(cut_6000$Freq),2)
-#7.74
-
-cut_10000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=10000), dig.lab =7)))
-c10m<-round(mean(cut_10000$Freq),2)
-#12.73
-
-#Table that organizes these Poisson MLE results
-Poisson_MLE_df <- data.frame(binwidth = c(3000, 4500, 6000, 10000),
-                     value = c(c3m, c4m, c6m, c10m))
-
-knitr::kable(MLE_df,
-             row.names = FALSE,
-             col.names = c("Bin Width", "$\\hat{\\lambda}$"), booktabs = TRUE,
-             caption = "Poisson MLE of $\\hat{\\lambda}$", escape = FALSE)
-
-
-
-
-
-
-
-
-#####Addtional hypothesis (need to fix)
-df2<-read.csv("Data2.csv")
-
-#Create binaries
-df2$hiv_binary <- ifelse(df2$hiv == "positive", 1, 0)
-df2$sex<-ifelse(df2$"ï..sex" =="Male",1,0) #Male 1; Female 0
-df2$sex <- factor(df2$sex)
-
-df2$cmv_tertile_4cat <- ifelse(df2$cmv_tertile == "Negative", 0,
-                               ifelse(df2$cmv_tertile == "Low", 1,
-                                      ifelse(df2$cmv_tertile == "Medium", 2, 3)))
-df2$cmv_tertile_4cat<-factor(df2$cmv_tertile_4cat)
-test21<-glm(hiv_binary~cmv_tertile_4cat, data=df2, family=binomial())
-test21predict<-as.data.frame(predict(test21))
-
-HCMV IgG OD (as the dependent variable) and sex, HIV and TB status 
-test9<-glm(cmv~, data=df2) 
-             #sex + hiv_binary, data=df2)
-test9<-predict(test9)
-df3<-cbind(df2, test9)
-
+$\hat{\lambda}$
