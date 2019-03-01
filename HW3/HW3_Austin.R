@@ -152,7 +152,7 @@ chisqtable <- function(n.region, site, N){
   # lambda estimate
   lambda.est <- n/n.region
   # cut into n.region number of non-overlapping intervals
-  count.int <- table(cut(site, breaks = seq(1, length(gene), length.out=n.region+1), include.lowest=TRUE))
+  count.int <-table(cut(site, breaks = seq(1, 229354, length.out=n.region+1), include.lowest=TRUE))
   # get the count levels range
   count.vector <- as.vector(count.int)
   count.range <- max(count.vector) - min(count.vector) + 1
@@ -175,7 +175,8 @@ chisqtable <- function(n.region, site, N){
   return (table)
 }
 
-bins3000.table<- chisqtable(76, cut_3000$Freq, length(df$location))
+bins3000.table<- chisqtable(76, df$location,229354 )
+#bins4500.table<- chisqtable(50, )
 
 
 
