@@ -167,7 +167,7 @@ left = textGrob("Count", rot = 90, vjust = 0.2, gp=gpar(fontsize=15)), ncol=3,as
 
 
 
-####Part 4 clusters
+####Part 3
 #These are the MLE for lambda with different bin sizes 
 cut_3000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=3000), dig.lab =7)))
 c3m<-round(mean(cut_3000$Freq),2)
@@ -210,6 +210,9 @@ knitr::kable(MLE_df,
 test<-as.data.frame(table(bin(df$location, 12, label=c(1:12))))$Freq
 
 chisq.test(test)
+
+
+
 
 
 
