@@ -5,6 +5,7 @@
 # setwd('C:/Users/buwen/OneDrive/Desktop/MATH 189/HW2')
 # path<-"C:/Users/buwen/"
 setwd(paste0(path,'Documents/Git/M189WI2019/HW3'))
+options(scipen = 999)
 
 #Load dependencies
 library(dplyr)
@@ -162,64 +163,70 @@ bottom=textGrob("Letter Index", gp=gpar(fontsize=15)),
 left = textGrob("Count", rot = 90, vjust = 0.2, gp=gpar(fontsize=15)), ncol=3,as.table = FALSE)
 
 
-
-
-dpois(13, c3m) * 57
-
-
 ####Part 3
 #These are the MLE for lambda with different bin sizes 
 cut_3000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=3000), dig.lab =7)))
 c3m<-round(mean(cut_3000$Freq),2)
 bin_val_3000 <- trunc(229354/3000)
-#3.87
-
 freq_3000 <- as.data.frame(table(cut_3000$Freq))
-prob_3000 <- c()
-expected_3000 <- c()
-for (i in 1:nrow(freq_3000)){
-  prob_3000 <- append(prob_3000, dpois(as.numeric(as.character(freq_3000[i,1])), c3m))
-  expected_3000 <- append(expected_3000,dpois(as.numeric(as.character(freq_3000[i,1])), c3m) * bin_val_3000)
+#Generating Frequency Chart for 3000
+expected <- c()
+for(i in 0:30){
+  expected <- append(expected,dpois(i, c3m) * bin_val_3000)
 }
 
-freq_3000 <- cbind(freq_3000,prob_3000,expected_3000)
+freq_3000$Var1 <- as.numeric(freq_3000$Var1)
 
-cleaned_freq_3000 <- data.frame("Var1" = "0-1", "Freq" = 11, "prob_3000" = 0.1015803, "expected_3000" = 7.7201)
-cleaned_freq_3000 <- rbind(cleaned_freq_3000, freq_3000[2:7,])
-cleaned_freq_3000 <- rbind(cleaned_freq_3000,
-                           data.frame("Var1"= "7,8,10,13", "Freq" = 6, "prob_3000" = 0.08431158, "expected_3000" = 6.40768))
+Poison_3_table <- (data.frame("Var" = 0:30,
+                              "Expected" = expected)) %>% left_join(freq_3000, by = c("Var" = "Var1"))
+Poison_3_table[is.na(Poison_3_table)] <- 0
+
+#Poisson 3000
+Poison_3_table$Var <- as.character(Poison_3_table$Var)
+cleaned_poisson_3 <- rbind(data.frame("Var" = "0-1", "Expected" = 7.7201, "Freq" = 1),
+                           Poison_3_table[3:7,],
+                           data.frame("Var" = "7+", "Expected" = 7.415565, "Freq" = 16))
+
 c3m_chi_square_val <- 0 
-for (i in 1:nrow(cleaned_freq_3000)){
-  expected_val <- cleaned_freq_3000[i,4]
-  diff <- cleaned_freq_3000[i,2] - expected_val
+for (i in 1:nrow(cleaned_poisson_3)){
+  expected_val <- cleaned_poisson_3[i,2]
+  diff <- cleaned_poisson_3[i,3] - expected_val
   c3m_chi_square_val <- c3m_chi_square_val + (diff^2)/expected_val
 }
 
 
+#4500
 cut_4500<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=4500), dig.lab =7)))
 c4m<-round(mean(cut_4500$Freq),2)
 freq_4500 <- as.data.frame(table(cut_4500$Freq))
 bin_val_4500 <- trunc(229354/4500)
 
-prob_4500 <- c()
-expected_4500 <- c()
-for (i in 1:nrow(freq_4500)){
-  prob_4500 <- append(prob_4500, dpois(as.numeric(as.character(freq_4500[i,1])), c4m))
-  expected_4500 <- append(expected_4500,dpois(as.numeric(as.character(freq_4500[i,1])), c4m) * bin_val_4500)
+#Generating Frequency Chart for 4500
+expected <- c()
+for(i in 0:30){
+  expected <- append(expected,dpois(i, c4m) * bin_val_4500)
 }
 
-freq_4500 <- cbind(freq_4500, prob_4500, expected_4500)
-cleaned_freq_4500 <- data.frame("Var1" = "1,2,3", "Freq" = 12, "prob_4500" = 0.1688527, "expected_4500" = 8.442637)
-cleaned_freq_4500 <- rbind(cleaned_freq_4500, freq_4500[4:7,])
-cleaned_freq_4500 <- rbind(cleaned_freq_4500,
-                           data.frame("Var1" = "8,9,10,11,12,18", "Freq" = 12, "prob_4500" = 0.2197432, "expected_4500" = 10.98716))
+freq_4500$Var1 <- as.numeric(freq_4500$Var1)
+
+Poison_4_table <- (data.frame("Var" = 0:30,
+                              "Expected" = expected)) %>% left_join(freq_4500, by = c("Var" = "Var1"))
+Poison_4_table[is.na(Poison_4_table)] <- 0
+
+#Poisson 4500
+Poison_4_table$Var <- as.character(Poison_4_table$Var)
+cleaned_poisson_4 <- rbind(data.frame("Var" = "0-3", "Expected" = 8.597073, "Freq" = 12 ),
+                           Poison_4_table[5:8,],
+                           data.frame("Var" = "8+", "Expected" = 11.31634, "Freq" = 12))
 
 c4m_chi_square_val <- 0 
-for (i in 1:nrow(cleaned_freq_4500)){
-  expected_val <- cleaned_freq_4500[i,4]
-  diff <- cleaned_freq_4500[i,2] - expected_val
+for (i in 1:nrow(cleaned_poisson_4)){
+  expected_val <- cleaned_poisson_4[i,2]
+  diff <- cleaned_poisson_4[i,3] - expected_val
   c4m_chi_square_val <- c4m_chi_square_val + (diff^2)/expected_val
 }
+
+
 
 #5.78
 
@@ -228,28 +235,31 @@ c6m<-round(mean(cut_6000$Freq),2)
 freq_6000 <- as.data.frame(table(cut_6000$Freq))
 bin_val_6000 <- trunc(229354/6000)
 
-prob_6000 <- c()
-expected_6000 <- c()
-for (i in 1:nrow(freq_6000)){
-  prob_6000 <- append(prob_6000, dpois(as.numeric(as.character(freq_6000[i,1])), c6m))
-  expected_6000 <- append(expected_6000,dpois(as.numeric(as.character(freq_6000[i,1])), c6m) * bin_val_6000)
+#Generating Frequency Chart for 6000
+expected <- c()
+for(i in 0:30){
+  expected <- append(expected,dpois(i, c6m) * bin_val_6000)
 }
 
-freq_6000 <- cbind(freq_6000, prob_6000, expected_6000)
-cleaned_freq_6000 <- data.frame("Var1" = "2,3,4,5,6", "Freq" = 15, "prob_6000" = 0.3423467, "expected_6000" = 13.00918)
-cleaned_freq_6000 <- rbind(cleaned_freq_6000, freq_6000[6:7,])
-cleaned_freq_6000 <- rbind(cleaned_freq_6000, 
-                           data.frame("Var1" = "9,10", "Freq" = 7, "prob_6000" = 0.212041, "expected_6000" = 8.05756))
-cleaned_freq_6000 <- rbind(cleaned_freq_6000,
-                           data.frame("Var1" = "11,12,13,14,19", "Freq" = 8, "prob_6000" = 0.1461774, "expected_6000" = 5.55474))
+freq_6000$Var1 <- as.numeric(freq_6000$Var1)
+
+Poison_6_table <- (data.frame("Var" = 0:30,
+                              "Expected" = expected)) %>% left_join(freq_6000, by = c("Var" = "Var1"))
+Poison_6_table[is.na(Poison_6_table)] <- 0
+
+#Poisson 6000
+Poison_6_table$Var <- as.character(Poison_6_table$Var)
+cleaned_poisson_6 <- rbind(data.frame("Var" = "0-5", "Expected" = 13.15367, "Freq" = 20),
+                           Poison_6_table[8:9,],
+                           data.frame("Var" = "9-10", "Expected" = 8.05756, "Freq" = 5),
+                           data.frame("Var" = "11+", "Expected" = 6.048498, "Freq" = 5))
 
 c6m_chi_square_val <- 0 
-for (i in 1:nrow(cleaned_freq_6000)){
-  expected_val <- cleaned_freq_6000[i,4]
-  diff <- cleaned_freq_6000[i,2] - expected_val
+for (i in 1:nrow(cleaned_poisson_6)){
+  expected_val <- cleaned_poisson_6[i,2]
+  diff <- cleaned_poisson_6[i,3] - expected_val
   c6m_chi_square_val <- c6m_chi_square_val + (diff^2)/expected_val
 }
-
 
 #7.74
 
@@ -258,27 +268,26 @@ c10m<-round(mean(cut_10000$Freq),2)
 freq_10000 <- as.data.frame(table(cut_10000$Freq))
 bin_val_10000 <- trunc(229354/10000)
 
-prob_10000 <- c()
-expected_10000 <- c()
-for (i in 1:nrow(freq_10000)){
-  prob_10000 <- append(prob_10000, dpois(as.numeric(as.character(freq_10000[i,1])), c10m))
-  expected_10000 <- append(expected_10000,dpois(as.numeric(as.character(freq_10000[i,1])), c10m) * bin_val_10000)
+#Generating Frequency Chart for 10000
+expected <- c()
+for(i in 0:50){
+  expected <- append(expected,dpois(i, c10m) * bin_val_10000)
 }
 
-freq_10000 <- cbind(freq_10000, prob_10000, expected_10000)
-cleaned_freq_10000 <- data.frame("Var1" = "6,8,10,11", "Freq" = 10, "prob_10000" = 0.2648704, "expected_10000" = 5.827149)
-cleaned_freq_10000 <- rbind(cleaned_freq_10000,
-                            data.frame("Var1" = "12,13,14,15,16,17,20,23", "Freq" = 12, "prob_10000" = 0.5417228, "expected_10000" = 11.9179))
+freq_10000$Var1 <- as.numeric(freq_10000$Var1)
 
-c10m_chi_square_val <- 0 
-for (i in 1:nrow(cleaned_freq_10000)){
-  expected_val <- cleaned_freq_10000[i,4]
-  diff <- cleaned_freq_10000[i,2] - expected_val
-  c10m_chi_square_val <- c10m_chi_square_val + (diff^2)/expected_val
-}
+Poison_10_table <- (data.frame("Var" = 0:30,
+                               "Expected" = expected)) %>% left_join(freq_10000, by = c("Var" = "Var1"))
+Poison_10_table[is.na(Poison_10_table)] <- 0
 
 
-#12.73
+
+##### CALCULATING CHI SQUARE VALUES #####
+pchisq(c3m_chi_square_val, nrow(cleaned_freq_3000) - 2, lower.tail = FALSE)
+pchisq(c4m_chi_square_val, nrow(cleaned_freq_4500) - 2, lower.tail = FALSE)
+pchisq(c6m_chi_square_val, nrow(cleaned_freq_6000) - 2, lower.tail = FALSE)
+
+
 
 #Table that organizes these MLE results
 MLE_df <- data.frame(binwidth = c(3000, 4500, 6000, 10000),
@@ -332,6 +341,8 @@ test9<-glm(cmv~, data=df2)
              #sex + hiv_binary, data=df2)
 test9<-predict(test9)
 df3<-cbind(df2, test9)
+
+
 
 
 # #use for later 
