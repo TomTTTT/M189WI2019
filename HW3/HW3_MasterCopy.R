@@ -371,10 +371,33 @@ pchisq(c4m_chi_square_val, nrow(cleaned_poisson_4) - 2, lower.tail = FALSE)
 pchisq(c6m_chi_square_val, nrow(cleaned_poisson_6) - 2, lower.tail = FALSE)
 #interval lengths: 3000,4500,6000; chi^2 test pvalue: the numbers above
 
+#Create dataframe of chi square values to print  in a table 
+chisq_df <- data.frame(binwidth = c(3000, 4500, 6000),
+                             value = c(0.0005707537, 0.342621, 0.1102576))
+
+knitr::kable(chisq_df,
+             row.names = FALSE,
+             col.names = c("Interval Size", "$\\chi^2$"), booktabs = TRUE,
+             caption = "$\\chi^2$ Values With Different Interval Sizes", escape = FALSE)
 
 
 #######
 #Put cleaned_poisson_* into tables to publish
+
+knitr::kable(cleaned_poisson_3, 
+             row.names = FALSE,
+             col.names = c("Palindrome\n count", "Expected", "Observed"), booktabs=TRUE,
+             caption = "Distribution of Palindromes\n over Interval size = 3000")
+
+knitr::kable(cleaned_poisson_4, 
+             row.names = FALSE,
+             col.names = c("Palindrome\n count", "Expected", "Observed"), booktabs=TRUE,
+             caption = "Distribution of Palindromes\n over Interval size = 4500")
+
+knitr::kable(cleaned_poisson_6, 
+             row.names = FALSE,
+             col.names = c("Palindrome\n count", "Expected", "Observed"), booktabs=TRUE,
+             caption = "Distribution of Palindromes\n over Interval size = 6000")
 
 #Table that organizes these Poisson MLE results
 Poisson_MLE_df <- data.frame(binwidth = c(3000, 4500, 6000, 10000),
@@ -382,7 +405,7 @@ Poisson_MLE_df <- data.frame(binwidth = c(3000, 4500, 6000, 10000),
 
 knitr::kable(Poisson_MLE_df,
              row.names = FALSE,
-             col.names = c("Bin Width", "$\\hat{\\lambda}$"), booktabs = TRUE,
+             col.names = c("Interval Size", "$\\hat{\\lambda}$"), booktabs = TRUE,
              caption = "Poisson MLE of $\\hat{\\lambda}$", escape = FALSE)
 
 
@@ -425,32 +448,19 @@ df2$mean_diast<-as.numeric(as.character(df2$mean_diast))
 #Loop for categorical variables
 traits_c<-c("hiv", "R22_bpgroup", "bmi")
 
-df3 <- subset(df2, is.na(df2$hiv))
-df3 <- subset(df3, is.na(df2$R22_bpgroup))
-
-#Relevel variables to reorder boxplots 
-#HIV
-df3$hiv_reordered <- factor(df3$hiv,
-                       levels = c('unknown','negative','positive'),ordered = TRUE)
-#Hypertension
-df2$R22_bpgroup[(df2$R22_bpgroup!="Hypertension stage 1") & 
-                  (df2$R22_bpgroup!="Hypertension stage 2") & 
-                  (df2$R22_bpgroup!="Normal") &
-                  (df2$R22_bpgroup!="Pre-hypertension")]<-"Unknown"
-
-df2$R22_bpgroup_reordered <- factor(df2$R22_bpgroup,
-                                    levels - c("", "Hypertension stage 1", "Hypertension stage 2", "Normal", "Pre-hypertension"), ordered=TRUE)
-
+df3 <- subset(df2, !is.na(df2$hiv))
+df3 <- subset(df3, !is.na(df2$R22_bpgroup))
 
 #box plots 
-box_hiv<-ggplot(subset(df2, !is.na(hiv_reordered)), aes(x=hiv_reordered, y=cmv)) + geom_boxplot(color="black", fill="red", alpha=0.2)
+box_hiv<-ggplot(df3, aes(x=hiv, y=cmv)) + geom_boxplot(color="black", fill="red", alpha=0.2) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5)) +
+  ggtitle("HIV Status")
 
-for(i in traits_c){
-  eval(parse(text=paste0("
-  box_",i,"<-ggplot(df2, aes(x=",i,", y=cmv)) + geom_boxplot()
-")))
-}
+box_hyper<-ggplot(df3, aes(x=R22_bpgroup, y=cmv)) + geom_boxplot(color="black", fill="red", alpha=0.2) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5)) +
+  ggtitle("Hypertension Status")
 
-grid.arrange(box_bmi, box_hiv, box_R22_bpgroup, ncol=2)
+grid.arrange(box_hiv, box_hyper, ncol=2)
 
-
+#knit to pdf 
+#knitr::stitch('HW3_MasterCopy.R')
