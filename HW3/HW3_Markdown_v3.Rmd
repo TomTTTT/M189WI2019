@@ -1,0 +1,588 @@
+---
+title: Unusual Cluster in the Palindrome
+author: Austin Clark, Timothy Lee, Andy Schleicher, Tom Tang, Aiden Yoon, Benson Wu
+date: March 2, 2019
+output: pdf_document
+---
+
+#Abstract
+
+#Method
+#Result
+#Conclusion
+
+\pagebreak
+
+
+
+```{r, echo=F,message=FALSE, warning=FALSE}
+# Load working directory
+# Enter your own path in the quotes in the path variable
+# path<-"/Users/Timlee/"
+# setwd("C:/Users/Aiden/Documents/GitHub/M189WI2019/HW3")
+# setwd('C:/Users/buwen/OneDrive/Desktop/MATH 189/HW2')
+path<-"C:/Users/buwen/"
+setwd(paste0(path,'Documents/Git/M189WI2019/HW3'))
+#Load dependencies
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(stargazer)
+library(tree)
+library(rattle)
+library(rpart)
+library(rpart.plot)
+library(party)
+library(ggsci)
+library(Hmisc)
+library(lattice)
+library(knitr)
+library(purrr)
+library(OneR)
+library(nnet)
+#Load Data
+df<-read.csv("Data1.txt")
+```
+
+#Background and Data Description
+The virus known as Human Cytomegalovirus (HMCV) is not only the largest virus to infect human beings but the most inherent infection that is most common among humans. The rates of infection within cities of the United States reach as high as sixty to seventy percent (1). This percentage reaches 100 in certain parts of Africa as well. Geographically, the instances of CMV range from 30 to 80 percent. The disease is a pathogen that fixates on the heart, kidney, liver and lungs and can lead to immobilization and death (1). CMV stems from the same family as herpes virus which indicates that everyone can contract the virus. The majority of infections happen at or shortly after birth with 10-15% of children being infected before age 5. If the mother contracts the virus during during or before the pregnancy, there is a 1-3% chance that the baby inherits the disease (1). The CMV rate of infection jumps to a 10-60% frequency as after the pregnancy. This frequency spike is subject to mothers who have contracted the disease and is passed through their breast milk to the infant(1). After infancy, the virus then lies dormant until late adolescence at which point the symptoms of the virus return. If the virus enters a productive cycle, then a replication process occurs and creates a multitude of copies. The most vulnerable to the virus are those who have weak immunity such as an auto-immune disease or a chemotherapy patient. 
+
+The severity and frequency of the virus create good reason for research to be done to find a cure. To develop strategies for combating the virus, scientists study the way in which the virus replicates. In order to study the replication of the virus, scientists turn to the study of the DNA of the virus. DNA has a double helix structure made of two long chains of nucleotides. Each nucleotide is composed of a sugar, a phosphate and a base. The bases have four types: adenine (A), cytosine (C) , guanine (G), and thymine (T). In this analysis, we look particularly at the DNA sequence of Human cytomegalovirus (CMV). CMV is a common virus that infects people of all ages. When CMV is in a person's body, it stays there for life, but most people infected with CMV show no signs or symptoms. However, CMV infection can cause grave health problems for people with weakened immune systems and for unborn babies. Our data set contains the locations of 296 palindromes of length greater than 10 found in a particular CMV DNA sequence that is 229,354 letters long. It is hypothesized that being able to find origins of replication through palindrome locations will enable better understanding of how CMV can be eliminated. The following figures show the distribution of palindromes across the DNA sequence with respect to different interval widths. We can see that the clusters of palindromes change as we increase the interval widths. 
+
+  
+  
+
+```{r, echo=F,message=FALSE, warning=FALSE}
+#Some histograms with various bin widths for our data
+binlist<-c(3000,4500,6000,10000)
+for(i in binlist){
+  eval(parse(text=paste0("
+  cmv_p_",i,"<-ggplot(df, aes(x=location)) +
+  geom_histogram(color='black', fill='red', binwidth = ",i,", position = 'dodge', alpha=0.5) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5), 
+        axis.text.x = element_text(angle = 60, hjust = 1),
+        axis.title.x=element_blank(), axis.title.y=element_blank()) +
+  labs(x = 'DNA Base Pair Index', subtitle='Interval Size = ",i," base pairs') +
+  scale_x_continuous(breaks = seq(0, 229354, 25000))
+                         "))) 
+}
+#Compile into grid
+grid.arrange(cmv_p_3000,cmv_p_4500,cmv_p_6000,cmv_p_10000, bottom=textGrob("Letter Index", gp=gpar(fontsize=15)),
+             left = textGrob("Count", rot = 90, vjust = 0.4, gp=gpar(fontsize=15)), 
+             top=textGrob("CMV Palindrome Locations with Different Interval Sizes",gp=gpar(fontsize=15,fontface="bold")))
+```
+
+
+#Random Scatter
+We first begin by performing a random scatter through Monte Carlo uniform sampling to scatter 296 palindromes across a DNA sequence of 229,354 base pairs. Three simulations were done in order to ensure randomness. The simulations are compared visually compared to the location of palindromes in our original data. The following plot shows the 2D scatter of palindromes across the original DNA sequence and the simulated palindrome locations. 
+
+
+```{r, echo=F,message=FALSE, warning=FALSE}
+########PART 1#########
+#Let's generate a few Monte Carlo Samples
+####Generation process###
+N<-229354 #Length of CMV
+n<-296 #Number of palindromes
+##Random Scatter
+#Loop that does random scatter and generates plot
+for(j in 1:3){
+  #Set seed
+  set.seed(j)
+  #Create empty vector
+  eval(parse(text=paste0("unifMC_",j,"<-rep(0,296)")))
+  
+  #Uniform MC generation
+  for(i in 1:296){
+    eval(parse(text=paste0("unifMC_",j,"[i]<-rdunif(1, N, 1)")))
+  }
+#Sort values and put it into dataframe
+eval(parse(text=paste0("unifMC_",j,"<-sort(unifMC_",j,", decreasing=FALSE)")))
+eval(parse(text=paste0("unifMC_",j,"<-as.data.frame(unifMC_",j,")")))
+#Rename the location column 
+eval(parse(text=paste0("colnames(unifMC_",j,")[1] <- 'location'")))
+#Create plots of simulated palindrome locations
+eval(parse(text=paste0("
+unifMC_p",j,"<-ggplot(unifMC_",j,", aes(x=location)) +
+  geom_histogram(color='black', fill='blue', binwidth = 4500, position = 'dodge', alpha=0.5) + 
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5), 
+        axis.text.x = element_text(angle = 60, hjust = 1), axis.title.y=element_blank(), axis.title.x=element_blank()) +
+  labs(title = 'CMV Palindrome Location',
+       subtitle='Uniform Scatter: Iteration ",j,"') +
+  scale_x_continuous(breaks = seq(0, 229354, 25000)) 
+")))
+eval(parse(text=paste0("strip_",j,"<-stripplot(df$location, jitter=0.1, offset=1/3, xlab='', main = 'Iteration ",j,"')")))
+}
+#Use histograms from original data, but remove x/y axis titles from the plots
+binlist<-c(3000,4500,6000,10000)
+for(i in binlist){
+  eval(parse(text=paste0("
+                         cmv_p_",i,"<-ggplot(df, aes(x=location)) +
+                         geom_histogram(color='black', fill='red', binwidth = ",i,", position = 'dodge', alpha=0.5) +
+                         theme(plot.title = element_text(hjust = 0.5),
+                         plot.subtitle = element_text(hjust = 0.5), 
+                         axis.text.x = element_text(angle = 60, hjust = 1),
+                         axis.title.x=element_blank(), axis.title.y=element_blank()) +
+                         labs(x = 'DNA Base Pair Index', title = 'CMV Palindrome Location',
+                         subtitle='Bin Width = ",i,"') +
+                         scale_x_continuous(breaks = seq(0, 229354, 25000))
+                         "))) 
+}
+#Strip plot of original location of palindromes
+strip_df<-stripplot(df$location, jitter=0.1, offset=1/3,xlab="", main="Original Data")
+grid.arrange(strip_df, strip_1, strip_2, strip_3)
+```
+As we can observe, it is hard to tell if there are significant clusters because the simulated palindrome locations seem to be spread evenly across the DNA sequence, indicating that the original data departs from a uniform scatter of palindromes across the DNA sequence.
+
+\pagebreak
+
+The following figure shows the distribution of palindromes across the DNA sequence with the interval size set to 4,500. Again, we see that there is no significant cluster of palindromes in the simulated data unlike the palindrome locations in the original data. This leads us to investigate the location and spacing of palindromes next.
+
+```{r, echo=F,message=FALSE, warning=FALSE}
+#Use this graph in markdown 
+grid.arrange(cmv_p_4500,unifMC_p1,unifMC_p2,unifMC_p3, bottom=textGrob("DNA Base Pair Index", gp=gpar(fontsize=15)),
+             left = textGrob("Count", rot = 90, vjust = 0.4, gp=gpar(fontsize=15)), ncol=2,nrow=2)
+```
+
+\pagebreak
+
+#Location and  Spacings
+We examined the spacings between various intervals of palindromes to see if they follow any particular distributions. To ensure replicability, we examined the spacings not only in the original palindrome data, but also in our three palindrome simulations as well. We made the choice to perform this part of the analysis using an interval size of 4,500 DNA base pairs. We compared the distances between pairs, triplets, and decuples. The following figure shows the distributions of the different groupings.  
+
+```{r, echo=F,message=FALSE, warning=FALSE}
+######################################
+####Part 2 Locations and spacings#####
+######################################
+#Create column that gives distance between pairs, triplets, quintuples of Palindromes
+#Original
+#Pair
+df$location_lag <- Lag(df$location, 1)
+df$distance_pair<- df$location-df$location_lag
+df$location_lag<-NULL
+df_pair<-ggplot(df, aes(x=distance_pair)) +
+  geom_histogram(color='black', fill='red',position='dodge',alpha=0.5,bins=30) +
+  theme(axis.title.x=element_blank()) + labs(y="Original")
+#Triplet
+df$location_lag <- Lag(df$location, 2)
+df$distance_triplet <- df$location-df$location_lag
+df$location_lag<-NULL
+df_triplet<-ggplot(df, aes(x=distance_triplet)) + 
+  geom_histogram(color='black', fill='blue',position='dodge',alpha=0.5,bins=30) + 
+  theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+#Quintuples
+df$location_lag <- Lag(df$location, 5)
+df$distance_quint <- df$location-df$location_lag
+df$location_lag<-NULL
+df_quint<-ggplot(df, aes(x=distance_quint)) + 
+  geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=30) +
+  theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+#List of dataframes to loop through for the simluations
+dataframelist<-c("unifMC_1","unifMC_2","unifMC_3")
+for(i in dataframelist){
+  eval(parse(text=paste0("
+                         #Pair
+                         ",i,"$location_lag <- Lag(",i,"$location, 1)
+                         ",i,"$distance_pair<- ",i,"$location-",i,"$location_lag
+                         ",i,"$location_lag<-NULL
+                         ",i,"_pair<-ggplot(",i,", aes(x=distance_pair)) +
+                         geom_histogram(color='black', fill='red',position='dodge',alpha=0.5,bins=30) +
+                         theme(axis.title.x=element_blank()) + labs(y='Simulation')
+                         #Triplet
+                         ",i,"$location_lag <- Lag(",i,"$location, 2)
+                         ",i,"$distance_triplet <- ",i,"$location-",i,"$location_lag
+                         ",i,"$location_lag<-NULL
+                         ",i,"_triplet<-ggplot(",i,", aes(x=distance_triplet)) + 
+                         geom_histogram(color='black', fill='blue',position='dodge',alpha=0.5,bins=30) + 
+                         theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+                         #Quintuples
+                         ",i,"$location_lag <- Lag(",i,"$location, 5)
+                         ",i,"$distance_quint <- ",i,"$location-",i,"$location_lag
+                         ",i,"$location_lag<-NULL
+                         ",i,"_quint<-ggplot(",i,", aes(x=distance_quint)) + 
+                         geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=30) +
+                         theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+                         ")))
+}
+#Arrange all plots into 4x3 matrix
+grid.arrange(arrangeGrob(df_pair, unifMC_1_pair, unifMC_2_pair, unifMC_3_pair,nrow=4, top="Pair"),
+arrangeGrob(df_triplet, unifMC_2_triplet, unifMC_2_triplet, unifMC_3_triplet,nrow=4, top="Triplet"),
+arrangeGrob(df_quint, unifMC_1_quint, unifMC_2_quint, unifMC_3_quint,nrow=4, top="Decuple"), 
+bottom=textGrob("Letter Index", gp=gpar(fontsize=15)),
+left = textGrob("Count", rot = 90, vjust = 0.2, gp=gpar(fontsize=15)), ncol=3,as.table = FALSE)
+```
+
+As we can see in the figure above, we see the distribution of spacing between pairs of palindromes appears to follow an exponential distribution. We use Maximum Likelihood Estimation to estimate the lambda parameter of the paired spacing in our original data and three simulations, such that we solve for $\hat{\lambda}$ in the first order condition of the log-likelihood function of the exponential distribution. In distribution of spacing between triplets of palindromes, we see that the distribution follows a gamma distribution. And finally, as we look at the distance between 10 palindromes, we see that the distribution of spaces resembles a normal distribution. As we look at the distance between n palindromes for a large n, the distribution of spacings will seemingly converge to a normal distribution. The following table shows the $\hat{\lambda}$ values obtained from MLE.
+
+```{r, echo=F,message=FALSE, warning=FALSE}
+#Estimated Lambda for exponential distributions and generate random deviates and store in respective  dataframe
+set.seed(45)
+dataframelist<-c("df","unifMC_1","unifMC_2","unifMC_3")
+for(i in dataframelist){
+  eval(parse(text=paste0(" 
+  ",i,"$rexp<-rexp(296, (296-sum(is.na(",i,"$distance_pair)))/sum(",i,"$distance_pair, na.rm = T))
+  ")))
+}
+#Table that organizes these Poisson MLE results
+Exp_MLE_df <- data.frame(data=c("Original", "Simulation 1","Simulation 2","Simulation 3"), value = c(0.001289471, 0.001312996, 0.001307781, 0.001300281))
+knitr::kable(Exp_MLE_df,
+             row.names = FALSE,
+             col.names = c("Data", "$\\hat{\\lambda}$"), booktabs = TRUE,
+             caption = "Exponential MLE of $\\hat{\\lambda}$", escape = FALSE)
+```
+
+\pagebreak
+
+
+```{r, echo=F,message=FALSE, warning=FALSE}
+#Change original df_pair to reflect correct title 
+df_pair<-ggplot(df, aes(x=distance_pair)) + geom_histogram(color='black', fill='red',position='dodge',alpha=0.5, bins=20) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5, size = 10))+
+  ggtitle("Original Paired Distance Histogram")
+rexp_df<-ggplot(df, aes(x=rexp)) + geom_histogram(color='black', fill='blue',position='dodge',alpha=0.5,bins=20) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5, size = 10)) + 
+  ggtitle(expression(paste("Original w/ ", lambda," = 0.001289471")))
+rexp_unifMC_1<-ggplot(unifMC_1, aes(x=rexp)) + geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=20) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5, size = 10)) +
+  ggtitle(expression(paste("Sim. 1 w/ ", lambda," =  0.001312996")))
+rexp_unifMC_2<-ggplot(unifMC_1, aes(x=rexp)) +geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=20) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5, size = 10)) +
+  ggtitle(expression(paste("Sim. 2 w/ ", lambda," =  0.001307781")))
+rexp_unifMC_3<-ggplot(unifMC_1, aes(x=rexp)) + geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=20) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5, size = 10))+
+  ggtitle(expression(paste("Sim. 3 w/ ", lambda," =  0.001300281")))
+#Compile into Grid
+grid.arrange(df_pair, rexp_df, rexp_unifMC_1,rexp_unifMC_2,rexp_unifMC_3,
+             bottom=textGrob("Distance Between Pairs", gp=gpar(fontsize=15)),
+             left = textGrob("Count", rot = 90, vjust = 0.2, gp=gpar(fontsize=15)),
+             top = textGrob("Distributions of Paired Locations",gp=gpar(fontsize=20, fontface="bold")), ncol=3,as.table = FALSE)
+```
+
+In the figure above, we can see how a generation of random deviates with the respective estimated $\hat{\lambda}$ compares to the distribution of paired spacing in the original data. Interestingly, we see that for random deviates of the various $\hat{\lambda}$, the behavior of the distributions don't contain as many values in the first interval as expected for an exponential distribution. This leads us to investigate whether the palindrome locations from the original data actually follows a Poisson distribution and whether the paired spacing in the original data actually follows an exponential distribution. 
+
+#Counts
+```{r, echo=F,message=FALSE, warning=FALSE}
+######################################
+####Part 3############################
+######################################
+
+
+####Part 3
+#These are the MLE for lambda with different bin sizes 
+cut_3000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=3000), dig.lab =7)))
+c3m<-round(mean(cut_3000$Freq),2)
+bin_val_3000 <- trunc(229354/3000)
+freq_3000 <- as.data.frame(table(cut_3000$Freq))
+#Generating Frequency Chart for 3000
+expected <- c()
+for(i in 0:30){
+  expected <- append(expected,dpois(i, c3m) * bin_val_3000)
+}
+
+freq_3000$Var1 <- as.numeric(freq_3000$Var1)
+
+Poison_3_table <- (data.frame("Var" = 0:30,
+                              "Expected" = expected)) %>% left_join(freq_3000, by = c("Var" = "Var1"))
+Poison_3_table[is.na(Poison_3_table)] <- 0
+
+#Poisson 3000
+Poison_3_table$Var <- as.character(Poison_3_table$Var)
+cleaned_poisson_3 <- rbind(data.frame("Var" = "0-1", "Expected" = 7.7201, "Freq" = 1),
+                           Poison_3_table[3:7,],
+                           data.frame("Var" = "7+", "Expected" = 7.415565, "Freq" = 16))
+
+c3m_chi_square_val <- 0 
+for (i in 1:nrow(cleaned_poisson_3)){
+  expected_val <- cleaned_poisson_3[i,2]
+  diff <- cleaned_poisson_3[i,3] - expected_val
+  c3m_chi_square_val <- c3m_chi_square_val + (diff^2)/expected_val
+}
+
+
+#4500
+cut_4500<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=4500), dig.lab =7)))
+c4m<-round(mean(cut_4500$Freq),2)
+freq_4500 <- as.data.frame(table(cut_4500$Freq))
+bin_val_4500 <- trunc(229354/4500)
+
+#Generating Frequency Chart for 4500
+expected <- c()
+for(i in 0:30){
+  expected <- append(expected,dpois(i, c4m) * bin_val_4500)
+}
+
+freq_4500$Var1 <- as.numeric(freq_4500$Var1)
+
+Poison_4_table <- (data.frame("Var" = 0:30,
+                              "Expected" = expected)) %>% left_join(freq_4500, by = c("Var" = "Var1"))
+Poison_4_table[is.na(Poison_4_table)] <- 0
+
+#Poisson 4500
+Poison_4_table$Var <- as.character(Poison_4_table$Var)
+cleaned_poisson_4 <- rbind(data.frame("Var" = "0-3", "Expected" = 8.597073, "Freq" = 12 ),
+                           Poison_4_table[5:8,],
+                           data.frame("Var" = "8+", "Expected" = 11.31634, "Freq" = 12))
+
+c4m_chi_square_val <- 0 
+for (i in 1:nrow(cleaned_poisson_4)){
+  expected_val <- cleaned_poisson_4[i,2]
+  diff <- cleaned_poisson_4[i,3] - expected_val
+  c4m_chi_square_val <- c4m_chi_square_val + (diff^2)/expected_val
+}
+
+
+
+#5.78
+
+cut_6000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=6000), dig.lab =7)))
+c6m<-round(mean(cut_6000$Freq),2)
+freq_6000 <- as.data.frame(table(cut_6000$Freq))
+bin_val_6000 <- trunc(229354/6000)
+
+#Generating Frequency Chart for 6000
+expected <- c()
+for(i in 0:30){
+  expected <- append(expected,dpois(i, c6m) * bin_val_6000)
+}
+
+freq_6000$Var1 <- as.numeric(freq_6000$Var1)
+
+Poison_6_table <- (data.frame("Var" = 0:30,
+                              "Expected" = expected)) %>% left_join(freq_6000, by = c("Var" = "Var1"))
+Poison_6_table[is.na(Poison_6_table)] <- 0
+
+#Poisson 6000
+Poison_6_table$Var <- as.character(Poison_6_table$Var)
+cleaned_poisson_6 <- rbind(data.frame("Var" = "0-5", "Expected" = 13.15367, "Freq" = 20),
+                           Poison_6_table[8:9,],
+                           data.frame("Var" = "9-10", "Expected" = 8.05756, "Freq" = 5),
+                           data.frame("Var" = "11+", "Expected" = 6.048498, "Freq" = 5))
+
+c6m_chi_square_val <- 0 
+for (i in 1:nrow(cleaned_poisson_6)){
+  expected_val <- cleaned_poisson_6[i,2]
+  diff <- cleaned_poisson_6[i,3] - expected_val
+  c6m_chi_square_val <- c6m_chi_square_val + (diff^2)/expected_val
+}
+
+#7.74
+
+cut_10000<-as.data.frame(table(cut(df$location, breaks=seq(0,229354, by=10000), dig.lab =7)))
+c10m<-round(mean(cut_10000$Freq),2)
+freq_10000 <- as.data.frame(table(cut_10000$Freq))
+bin_val_10000 <- trunc(229354/10000)
+
+#Generating Frequency Chart for 10000
+expected <- c()
+for(i in 0:30){
+  expected <- append(expected,dpois(i, c10m) * bin_val_10000)
+}
+
+freq_10000$Var1 <- as.numeric(freq_10000$Var1)
+
+Poison_10_table <- (data.frame("Var" = 0:30,
+                               "Expected" = expected)) %>% left_join(freq_10000, by = c("Var" = "Var1"))
+Poison_10_table[is.na(Poison_10_table)] <- 0
+
+
+
+##### CALCULATING CHI SQUARE VALUES #####
+#pchisq(c3m_chi_square_val, nrow(cleaned_poisson_3) - 2, lower.tail = FALSE) 
+#pchisq(c4m_chi_square_val, nrow(cleaned_poisson_4) - 2, lower.tail = FALSE)
+#pchisq(c6m_chi_square_val, nrow(cleaned_poisson_6) - 2, lower.tail = FALSE)
+#interval lengths: 3000,4500,6000; chi^2 test pvalue: the numbers above
+
+#Put chi square values into a table
+chisq_df <- data.frame(binwidth = c(3000, 4500, 6000),
+                             value = c(0.0005707537, 0.342621, 0.1102576))
+
+knitr::kable(chisq_df,
+             row.names = FALSE,
+             col.names = c("Interval Size", "$\\chi^2$"), booktabs = TRUE,
+             caption = "$\\chi^2$ Values With Different Interval Sizes", escape = FALSE)
+
+
+#######
+#Put cleaned_poisson_* into tables to publish
+knitr::kable(cleaned_poisson_3, 
+             row.names = FALSE,
+             col.names = c("Palindrome count", "Expected", "Observed"), booktabs=TRUE,
+             caption = "Distribution of Palindromes over Interval size = 3000")
+
+knitr::kable(cleaned_poisson_4, 
+             row.names = FALSE,
+             col.names = c("Palindrome count", "Expected", "Observed"), booktabs=TRUE,
+             caption = "Distribution of Palindromes over Interval size = 4500")
+
+knitr::kable(cleaned_poisson_6, 
+             row.names = FALSE,
+             col.names = c("Palindrome count", "Expected", "Observed"), booktabs=TRUE,
+             caption = "Distribution of Palindromes over Interval size = 6000")
+
+#Table that organizes these Poisson MLE results
+Poisson_MLE_df <- data.frame(binwidth = c(3000, 4500, 6000, 10000),
+                     value = c(c3m, c4m, c6m, c10m))
+
+knitr::kable(Poisson_MLE_df,
+             row.names = FALSE,
+             col.names = c("Interval Size", "$\\hat{\\lambda}$"), booktabs = TRUE,
+             caption = "Poisson MLE of $\\hat{\\lambda}$", escape = FALSE)
+
+
+```
+
+
+#The biggest cluster
+We first used 57 bins to split the DNA sequence size to 4000 interval lengths. Using MLE, we calculated $\hat{\lambda}$ = 1.596491. Then, we found the max number of palindromes in an interval out of the observed data and calling that value K. We want to test whether or not we have an abnormally large cluster or not. 
+
+$$H_0:\; There\; is\; no\; abnormally \;large \;cluster$$
+$$H_1: \;There\; is \;an \;abnormally\; large\; cluster$$
+
+We calculate the p-value using the equation 1 - P(maximum count over m intervals $\ge$ k). We find that the p-value is $3.315838e^4$, rejecting our null hypothesis. So, we do in fact reason that there is an unreasonably large cluster to indicate a potential origin of replication in the interval where the max number of palindromes are, interval 24. 
+
+#Effects of HIV and Hypertension on HCMV IgG
+
+We looked at a data set regarding human cytomegalovirus and its relationship to tuberculosis and cardiovascular disease risk factors in a rural Ugandan cohort. We wanted to see if there was a relationship between HCMV IgG and Hypertension, and HCMV IgG and HIV status. We hypothesizes that there exists a relationship between those who have health impairments to their immune system and high blood pressure (hypertension). As you can see in the figure below, we show the quantiles of the following relationships. 
+
+
+```{r, echo=F,message=FALSE, warning=FALSE}
+###############################
+#####Addtional hypothesis######
+###############################
+df2<-read.csv("Data2.csv")
+
+#Create binaries
+#HIV status
+df2$hiv_binary <- ifelse(df2$hiv == "positive", 1, 0)
+df2$hiv_binary <- factor(df2$hiv_binary)
+
+#Sex
+df2$sex<-ifelse(df2$"ï..sex" =="Male",1,0) #Male 1; Female 0
+df2$sex <- factor(df2$sex)
+
+#4 category CMV
+df2$cmv_tertile_4cat <- ifelse(df2$cmv_tertile == "Negative", 0,
+                               ifelse(df2$cmv_tertile == "Low", 1,
+                                      ifelse(df2$cmv_tertile == "Medium", 2, 3)))
+df2$cmv_tertile_4cat<-factor(df2$cmv_tertile_4cat)
+
+#CMV Status 
+df2$cmvstatus_binary <- ifelse(df2$cmvstatus == "positive", 1, 0)
+df2$cmvstatus_binary <- factor(df2$cmvstatus_binary)
+
+#Make age continuous
+df2$age_yrs<-as.numeric(as.character(df2$age_yrs))
+
+#Factorize blood pressure variables
+df2$mean_syst<-as.numeric(as.character(df2$mean_syst))
+df2$mean_diast<-as.numeric(as.character(df2$mean_diast))
+
+#Loop for categorical variables
+traits_c<-c("hiv", "R22_bpgroup", "bmi")
+
+df3 <- subset(df2, !is.na(df2$hiv))
+df3 <- subset(df3, !is.na(df2$R22_bpgroup))
+
+#box plots 
+box_hiv<-ggplot(df3, aes(x=hiv, y=cmv)) + geom_boxplot(color="black", fill="red", alpha=0.2) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5)) +
+  ggtitle("HIV Status")
+
+box_hyper<-ggplot(df3, aes(x=R22_bpgroup, y=cmv)) + geom_boxplot(color="black", fill="red", alpha=0.2) +
+  theme(axis.title.x=element_blank(), plot.title = element_text(hjust = 0.5)) +
+  ggtitle("Hypertension Status")
+
+grid.arrange(box_hiv, box_hyper, ncol=2)
+
+```
+
+People who have stage 1 and stage 2 hypertension have higher quantiles of HCMV IgG than people who have normal blood pressure or pre-hypertension. People who are HIV positive have higher HCM IgG than those who are HIV negative. This may lead to further scientific study on why those who have higher blood pressure and are HIV positive tend to have a higher HCMV IgG. 
+
+
+\pagebreak
+
+#Theory
+
+####The Homogeneous Poisson Process 
+One of our goals is to investigate the nature of the counts of the number of palindromes. We will utilize a random model of a uniform scatter of palindromes. Hopefully we can interpret the estimation procedure of the model and comprehend the "statistical discrepancies" in two different models, with and without clusters. This leads us to the Homogeneous Poisson Process which "is a model for random phenomena (Lecture slide 16)." To be more concrete, it is a stochastic process that is utilized for modeling arrivals entering a system at a specific time or interval. If one is familiar with the Bernoulli Process, then one can think of the Poisson Process as a continuous-time variation of the Bernoulli Process. The rate at which the hits occur is denoted   where the "homogeneity" property enables the value of   not to be altered due to location (Lecture slide 17). Each number of hits in each time interval have a Poisson Distribution as well. For any random variable   in a Poisson Distribution, it is reasonable to suppose 
+
+$$P\left( K\; points\; in\; an\; interval\right) = \frac{{e^{ - \lambda } \lambda ^k }}{{k!}} \;\;for k = 0,1,2,...$$
+$$E[X] = \lambda$$
+ 
+
+Thus, if events occur independently of one another at at the constant rate of  , then a Poisson Process keeps track of the number of events that occur by a specific time or interval. Furthermore, no two clusters can fall into the same interval and each interval is independent with one another. Therefore, the Homogeneous Poisson Process will allow us to count how many clusters of palindromes are randomly scattered into each time interval. 
+
+One of the intricate aspects of the Homogeneous Poisson Process is the fact that our rate $\lambda$, is not usually given or known. In order to evaluate the Poisson processes appropriately without a know value of rate $\lambda$, we would need to estimate $\lambda$. There are two procedures that we can use to estimate the parameters of a Poisson process. These procedures are the Maximum Likelihood Estimator and the Method of Moments. For a Poisson Process both of these estimation methods end up with the same estimator so we will focus on the estimation method that we used which is the Maximum Likelihood Estimator.
+
+
+
+
+###Maximum Likelihood Estimator (MLE)
+
+The Maximum Likelihood Estimator (MLE) is a statistical technique used for estimation of an unknown variable. Due to the true parameter being unknown, we can use observed data to compute the MLE. The definition of the MLE is to maximize estimates of our parameter, our observations, to maximize the likelihood function. We denote the estimate MLE as $\hat{\theta}$ . Suppose that we have a set of random variables that have joint density:
+
+$$f_0(x_1,x_2,...,x_n)=f(x_1,x_2,...,x_n | \theta)$$
+
+Now let our observed values be denoted $X_i = x_1, X_2=x_2, ... ,X_n=x_n$. Again, we are using the MLE to maximize the likelihood of our observed values. Therefore, the likelihood function of $\theta$ can be defined as 
+
+$$l(\theta) = f(x_1,x_2,...,x_n | \theta)$$
+					
+					 
+
+If our data is identically and independently distributed, i.e.  , then the iid random variables reduce the likelihood function to 
+
+$$l(\theta) = \prod_{i=1}^{n}f(x_i|\theta)$$
+
+
+Our next step is to take the log of the likelihood function to streamline the complexities of the maximizing the product. Thus, the log of the likelihood can be defined:
+
+$$log[l(\theta)] = \displaystyle \sum_{n=1}^{\infty}log(f(x_i|\theta))$$
+ 
+
+After computing the $log[l(\theta)]$  we use calculus techniques by trying to obtain the critical point of the log likelihood function. Thus, we take the first derivative of $log[l(\theta)]$ with respect to our unknown parameter and set that value equal to zero. Then we solve for our unknown parameter  . In order to provide more transparency of how this process works, we will compute the MLE for the Poisson distribution. Assume that $X_1,X_2,...,X_n$ ~ $iid$   random sample drawn from a Poisson distribution that have an unknown parameter  . Recall:
+
+$$ P(X=x) = \frac{{e^{ - \lambda } \lambda ^k }}{{k!}} \;\;for k = 0,1,2,...$$
+
+Then the likelihood function for our sample is 
+
+$$l(\lambda) = \prod_{i=1}^{n}\frac{{e^{ - \lambda } \lambda ^{k}}}{{k!}}$$
+
+then the log likelihood function is 
+
+$$log[l(\theta)] = \displaystyle \sum_{i=1}^{n}\frac{{e^{ - \lambda } \lambda ^{k}}}{{k!}}$$
+
+Notice that we have a monotonically increasing function so to find the maximum we solve the derivative of the   and find the critical value:
+
+ $$\frac{\partial}{\partial \lambda} l(\lambda) = \frac{\partial}{\partial \lambda} [ \displaystyle \sum_{i=1}^{n}(x_ilog(\lambda)-n\lambda) -  \displaystyle \sum_{i=1}^{n}log(x_i!)] = \frac{\sum_{i=1}^{n}
+x_i}{\lambda}-n = 0 $$
+
+Then solving the last equation from $\hat{\lambda}$ we get
+$$\hat{\theta} = \frac{\sum_{i=1}^{n}x_i}{n} = \bar{x}$$
+
+
+###Exponential Distribution 
+
+The exponential distribution is a statistical model used to model the amount of time that it takes before an event occurs. A more rigorous definition is a model of events that are independent of each other and occur at a constant average parameter $\lambda$ . Specifically, we will use an exponential distribution if the waiting time is unknown. One key property of the exponential distribution is the probability that our event occurs during a specific time interval is proportionate to the length of our time interval. Since we are drawing samples from a Poisson process model and we constructed the intervals the same length with no overlap, then the number of observed palindromes are independent and come from a Poisson distribution. So we can assume that the maximum value of the independent Poisson random variables are the greatest number of hits in a group of intervals. Then we suppose that there are n intervals such that 
+
+$$P(\;maximum \;count\; over\; n\; intervals  \;\ge\;  j\;)$$
+$$= 1 - P(\;maximum\; count\; over\; n\; intervals\; <\;  j\;)$$
+$$= 1-P(\;all\; interval\; counts\; <\;  j\;)$$
+$$= 1-P(\;first\; interval\; counts\;<  \;j\;)$$ 
+                                               
+$$= 1 - [\lambda^0e^-\lambda + ... + \frac{\lambda^{j-1}}{(j-1)!} e^{-\lambda}]^n$$
+Using an estimator for the rate parameter $\lambda$ , we used the MLE in this study, we can approximate the probability of the maximum number of hits being at least $j$. The probability above is a P-value if we treat the maximum palindrome count as a test statistic.
+
+###Chi-Square Goodness of Fit Test
+To investigate whether the distribution of palindromes follows a poisson distribution, we use Chi-Square Goodness of Fit test. The reason that we believe this test is appropriate for this task is that we are comparing an empirical distribution with a target distribution, with which we can divide the DNA sequence into intervals and compute the corresponding observations and expectations for each bin. The test statistics for Goodness of Fit test is given in the following equation:
+
+$$\chi^2_{m-k-1}$$
+such that m is the number of categories and k is the number of parmeters estimated to obtain the expected counts. In our case, we subtract two degrees of freedom total. 
+
+#Conclusion
+\pagebreak
+
+#References
+**1)** Schleiss, M. R., & Plotkin, S. A. (n.d.). Human Cytomegalovirus. Retrieved February 17, 2019, from https://www.sciencedirect.com/topics/neuroscience/human-cytomegalovirus
+    
+**2)** https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0192086
