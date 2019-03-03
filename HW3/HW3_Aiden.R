@@ -70,19 +70,22 @@ library(OneR)
 nbins <- 57
 lambda.hat <- dim(df)[1]/nbins
 bin<-bin(df$location, nbins, label = c(1:57))
+lambda.hat2 <- (dim(df)[1] - 14) / (nbins -1)
 
 
-boot = function(x, nbins)
+pval = function(x, nbins)
 {
   p <- numeric(nbins)
-
+  p2 <- numeric(nbins-1)
   # max # of palindromes out of all bins
-  max.bin = 0
+  max.bin <- 0
+  s.max.bin <- 0
   where.cluster.is = 1
   for (i in 1:nbins)
   {
     if(max.bin < length(which(bin == i)))
     {
+      s.max.bin <- max.bin
       max.bin <- length(which(bin == i))
       where.cluster.is <- i
     }
@@ -90,15 +93,14 @@ boot = function(x, nbins)
     
   }
 
-  p <- 1 - ppois(max.bin, lambda.hat)^57
-  
-  
-  
+  p <- 1 - ppois(max.bin, lambda.hat)^nbins
+  p2 <- 1 - ppois(s.max.bin, lambda.hat2)^(nbins -1)
 
-  return(c(p, where.cluster.is, max.bin))
+  return(c(p, where.cluster.is, max.bin, p2, s.max.bin))
 }
+# pval of max| where that cluster is | the max bin size | pval of second max | second max bin size|
+pval(df$location, nbins)
 
-boot(df$location, nbins)
 
 # type 2 error
 set.seed(24)
