@@ -132,102 +132,102 @@ for(j in 1:1000)
 
 
 
-#####################################
-########### Type 2 Error ###########
-####################################
-
-# going to compare the cmv level between males and females and then check type 2 error for that
-
-df2 <- read.csv("Data2.csv")
-df2.m <- df2 %>% filter(df2$ï..sex == "Male")
-df2.f <- df2 %>% filter(df2$ï..sex == "Female")
-
-mean(df2.m$cmv)
-mean(df2.f$cmv)
-t.test(df2.m$cmv, df2.f$cmv)
-
-df$location_lag <- Lag(df$location, 1)
-df$distance_pair<- df$location-df$location_lag
-df$location_lag<-NULL
-df_pair<-ggplot(df, aes(x=distance_pair)) +
-  geom_histogram(color='black', fill='red',position='dodge',alpha=0.5,bins=30) +
-  theme(axis.title.x=element_blank()) + labs(y="Original")
-#Triplet
-df$location_lag <- Lag(df$location, 2)
-df$distance_triplet <- df$location-df$location_lag
-df$location_lag<-NULL
-df_triplet<-ggplot(df, aes(x=distance_triplet)) + 
-  geom_histogram(color='black', fill='blue',position='dodge',alpha=0.5,bins=30) + 
-  theme(axis.title.x=element_blank(),axis.title.y=element_blank())
-#Quintuples
-df$location_lag <- Lag(df$location, 5)
-df$distance_quint <- df$location-df$location_lag
-df$location_lag<-NULL
-df_quint<-ggplot(df, aes(x=distance_quint)) + 
-  geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=30) +
-  theme(axis.title.x=element_blank(),axis.title.y=element_blank())
-
-#List of dataframes to loop through for the simluations
-dataframelist<-c("unifMC_1","unifMC_2","unifMC_3")
-
-for(i in dataframelist){
-  eval(parse(text=paste0("
-                         #Pair
-                         ",i,"$location_lag <- Lag(",i,"$location, 1)
-                         ",i,"$distance_pair<- ",i,"$location-",i,"$location_lag
-                         ",i,"$location_lag<-NULL
-                         ",i,"_pair<-ggplot(",i,", aes(x=distance_pair)) +
-                         geom_histogram(color='black', fill='red',position='dodge',alpha=0.5,bins=30) +
-                         theme(axis.title.x=element_blank()) + labs(y='Simulation')
-                         #Triplet
-                         ",i,"$location_lag <- Lag(",i,"$location, 2)
-                         ",i,"$distance_triplet <- ",i,"$location-",i,"$location_lag
-                         ",i,"$location_lag<-NULL
-                         ",i,"_triplet<-ggplot(",i,", aes(x=distance_triplet)) + 
-                         geom_histogram(color='black', fill='blue',position='dodge',alpha=0.5,bins=30) + 
-                         theme(axis.title.x=element_blank(),axis.title.y=element_blank())
-                         #Quintuples
-                         ",i,"$location_lag <- Lag(",i,"$location, 5)
-                         ",i,"$distance_quint <- ",i,"$location-",i,"$location_lag
-                         ",i,"$location_lag<-NULL
-                         ",i,"_quint<-ggplot(",i,", aes(x=distance_quint)) + 
-                         geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=30) +
-                         theme(axis.title.x=element_blank(),axis.title.y=element_blank())
-                         ")))
-}
-
-
-Exp_MLE_df <- data.frame(data=c("Original", "Simulation 1","Simulation 2","Simulation 3"),
-                         value = c(0.001289471, 0.001312996, 0.001307781, 0.001300281))
-dataframlist <- c("df", "unifMC_1", "unifMC_2", "unifMC_3")
-tuplet <- c("_pair", "_triplet", "_quint")
-
-N <- 1000
-
-for(d in dataframelist)
-{
-  for(t in tuplet)
-  {
-    eval(parse(text=paste0("t2err_",d,"",t," <- 0")))
-  }
-}
-
-# need to make sure that t2err calculates for individual df and tuplets
-for(d in dataframelist)
-{
-  for(t in tuplet)
-  {
-    for(i in 1:N)
-    {
-      for(j in 1:4)
-      {
-        test <- rexp(100, Exp_MLE_df$value[j])
-        eval(parse(text=paste0("if((t.test(",d,"",t,", mu = Exp_MLE_df$value[j])$p.value, is.na = T) > 0.05) (t2err_",d,"",t," = t2err_",d,"",t," + 1)")))
-      }
-      
-    }
-  }
-}
+# #####################################
+# ########### Type 2 Error ###########
+# ####################################
+# 
+# # going to compare the cmv level between males and females and then check type 2 error for that
+# 
+# df2 <- read.csv("Data2.csv")
+# df2.m <- df2 %>% filter(df2$ï..sex == "Male")
+# df2.f <- df2 %>% filter(df2$ï..sex == "Female")
+# 
+# mean(df2.m$cmv)
+# mean(df2.f$cmv)
+# t.test(df2.m$cmv, df2.f$cmv)
+# 
+# df$location_lag <- Lag(df$location, 1)
+# df$distance_pair<- df$location-df$location_lag
+# df$location_lag<-NULL
+# df_pair<-ggplot(df, aes(x=distance_pair)) +
+#   geom_histogram(color='black', fill='red',position='dodge',alpha=0.5,bins=30) +
+#   theme(axis.title.x=element_blank()) + labs(y="Original")
+# #Triplet
+# df$location_lag <- Lag(df$location, 2)
+# df$distance_triplet <- df$location-df$location_lag
+# df$location_lag<-NULL
+# df_triplet<-ggplot(df, aes(x=distance_triplet)) + 
+#   geom_histogram(color='black', fill='blue',position='dodge',alpha=0.5,bins=30) + 
+#   theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+# #Quintuples
+# df$location_lag <- Lag(df$location, 5)
+# df$distance_quint <- df$location-df$location_lag
+# df$location_lag<-NULL
+# df_quint<-ggplot(df, aes(x=distance_quint)) + 
+#   geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=30) +
+#   theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+# 
+# #List of dataframes to loop through for the simluations
+# dataframelist<-c("unifMC_1","unifMC_2","unifMC_3")
+# 
+# for(i in dataframelist){
+#   eval(parse(text=paste0("
+#                          #Pair
+#                          ",i,"$location_lag <- Lag(",i,"$location, 1)
+#                          ",i,"$distance_pair<- ",i,"$location-",i,"$location_lag
+#                          ",i,"$location_lag<-NULL
+#                          ",i,"_pair<-ggplot(",i,", aes(x=distance_pair)) +
+#                          geom_histogram(color='black', fill='red',position='dodge',alpha=0.5,bins=30) +
+#                          theme(axis.title.x=element_blank()) + labs(y='Simulation')
+#                          #Triplet
+#                          ",i,"$location_lag <- Lag(",i,"$location, 2)
+#                          ",i,"$distance_triplet <- ",i,"$location-",i,"$location_lag
+#                          ",i,"$location_lag<-NULL
+#                          ",i,"_triplet<-ggplot(",i,", aes(x=distance_triplet)) + 
+#                          geom_histogram(color='black', fill='blue',position='dodge',alpha=0.5,bins=30) + 
+#                          theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+#                          #Quintuples
+#                          ",i,"$location_lag <- Lag(",i,"$location, 5)
+#                          ",i,"$distance_quint <- ",i,"$location-",i,"$location_lag
+#                          ",i,"$location_lag<-NULL
+#                          ",i,"_quint<-ggplot(",i,", aes(x=distance_quint)) + 
+#                          geom_histogram(color='black', fill='green',position='dodge',alpha=0.5,bins=30) +
+#                          theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+#                          ")))
+# }
+# 
+# 
+# Exp_MLE_df <- data.frame(data=c("Original", "Simulation 1","Simulation 2","Simulation 3"),
+#                          value = c(0.001289471, 0.001312996, 0.001307781, 0.001300281))
+# dataframlist <- c("df", "unifMC_1", "unifMC_2", "unifMC_3")
+# tuplet <- c("_pair", "_triplet", "_quint")
+# 
+# N <- 1000
+# 
+# for(d in dataframelist)
+# {
+#   for(t in tuplet)
+#   {
+#     eval(parse(text=paste0("t2err_",d,"",t," <- 0")))
+#   }
+# }
+# 
+# # need to make sure that t2err calculates for individual df and tuplets
+# for(d in dataframelist)
+# {
+#   for(t in tuplet)
+#   {
+#     for(i in 1:N)
+#     {
+#       for(j in 1:4)
+#       {
+#         test <- rexp(100, Exp_MLE_df$value[j])
+#         eval(parse(text=paste0("if((t.test(",d,"",t,", mu = Exp_MLE_df$value[j])$p.value, is.na = T) > 0.05) (t2err_",d,"",t," = t2err_",d,"",t," + 1)")))
+#       }
+#       
+#     }
+#   }
+# }
 
 
 
@@ -241,7 +241,7 @@ for(d in dataframelist)
 # 3 Simulation 2 0.001307781
 # 4 Simulation 3 0.001300281
 
-failing to rejecct null = Type II error
+# failing to rejecct null = Type II error
 
 
 
