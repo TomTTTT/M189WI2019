@@ -577,7 +577,23 @@ Using an estimator for the rate parameter $\lambda$ , we used the MLE in this st
 To investigate whether the distribution of palindromes follows a poisson distribution, we use Chi-Square Goodness of Fit test. The reason that we believe this test is appropriate for this task is that we are comparing an empirical distribution with a target distribution, with which we can divide the DNA sequence into intervals and compute the corresponding observations and expectations for each bin. The test statistics for Goodness of Fit test is given in the following equation:
 
 $$\chi^2_{m-k-1}$$
-such that m is the number of categories and k is the number of parmeters estimated to obtain the expected counts. In our case, we subtract two degrees of freedom total. 
+such that m is the number of categories and k is the number of parmeters estimated to obtain the expected counts. In our case, we subtract two degrees of freedom total. In our case we subtract the first degree of freedom as the theory of $\chi^2$ test statistic suggests, and the second degree of freedom because we are estimating $\hat{\lambda}$.
+
+#Type I/Type II Errors 
+
+Type I and Type II errors are in reference to the null and alternate hypothesis. Generally, when preforming hypothesis testing, we want to try to answer specific questions. So we set the null hypothesis to represent  "no" in response to the question and the alternative hypothesis represents the "yes" response. We also have an error variable that we can control denoted   which usually takes on the values of 0.01, 0.05, and 0.10 where   is given. Of course, we could have different values for   but these three values are considered standard. 
+The type I error is the error made when rejecting a null hypothesis that is true. Moreover, we fail to reject the alternative hypothesis and reject a true null hypothesis. If we do not reject the alternative hypothesis when the null is true, then we believe there is enough evidence to answer "yes" to our overarching question when, in fact, that is not the case. When testing, we equate the   level to the probability of the type I error. This is often referred to a "false positive." Formally, the probability of the type I error can be denoted 
+
+$$P\;(\;Reject\; the\; null\; | \;null \;is\; true\;) $$
+
+The type II error is the error made when not rejecting a null hypothesis when the alternative hypothesis is true. Moreover, we fail to reject the null hypothesis when the alternative hypothesis is true. In reference to our question, we believe there is enough evidence to fail to answer "no" when there is actually enough evidence to consider the alternative. This is commonly referred to as a "false negative." Formally, the probability of the type II error can be denoted 
+
+$$P\;(Do\; not\; reject\; null\; | \;alternative \;is\; true\;)$$
+
+The type II error is associated with the power of the test. Power is denoted as   and can be defined:
+
+$$\beta  = 1 -  P\;(\;Do\; not\; reject\; null\; | \;alternative\; is\; true\;) = 1 -  P(\;Type\; II\; error\;) $$
+
 
 #Conclusion
 \pagebreak
