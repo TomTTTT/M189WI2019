@@ -1,0 +1,15 @@
+4 lines (7 sloc)  73 Bytes
+    
+# R files
+
+*.Rhistory
+
+*.RData
+
+*.Rproj
+
+*.RHistory
+
+*.RDataTmp
+
+*.RProj
