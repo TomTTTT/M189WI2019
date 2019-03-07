@@ -27,4 +27,46 @@ library(nnet)
 library(dplyr)
 
 #Load Data
-df<-read.csv("data1.txt")
+df<-read.csv("data1.txt", sep="")
+
+
+###########################
+######PART 1###############
+###########################
+
+#Take log of gain 
+df$loggain<-log(df$gain)
+
+#First do a scatter plot
+#Linear
+ggplot(df, aes(x=density, y=gain)) + geom_point() + geom_smooth(method = "glm", 
+                                                                method.args = list(family = "gaussian"), se = TRUE)
+
+#Log the gain                                                               
+ggplot(df, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "glm", 
+                                                                method.args = list(family = "gaussian"), 
+                                                                se = TRUE)
+
+
+
+#REGRESSION
+#Linear
+glm<-glm(gain~density, data=df, family=gaussian())
+#Bind residuals into data frame to plot
+df$glm_residual<-resid(glm)
+summary(glm)
+
+#Log
+glm_log<-glm(loggain~density, data=df, family=gaussian())
+#Bind residuals into data frame to plot
+df$glm_log_residual<-resid(glm_log)
+
+summary(glm_log)
+
+#RESIDUAL PLOT
+#Linear
+ggplot(df, aes(x=density, y=glm_residual)) + geom_point()
+
+#Log
+ggplot(df, aes(x=density, y=glm_log_residual)) + geom_point()
+#This residual plot tells you that the data is not normal
