@@ -75,3 +75,21 @@ ggplot(df, aes(x=density, y=glm_log_residual)) + geom_point() +
   geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill="red")
 #This residual plot tells you that the data is not normal
 
+# Crossvalidation
+df2 <- df%>%filter(density != 0.508)
+
+ggplot(df2, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "glm", 
+                                                                   method.args = list(family = "gaussian"), 
+                                                                   se = TRUE)
+
+glm_log2<-glm(loggain~density, data=df2, family=gaussian())
+df_mod$glm_log_residual<-resid(glm_log2)
+summary(glm_log2)
+loggain_residual2 <- as.data.frame(summary(glm_log2)$coefficients[,2])
+loggain_mean2 <- mean(df2$glm_log_residual)
+
+ggplot(df2, aes(x=density, y=glm_residual)) + geom_point()
+ggplot(df2, aes(x=density, y=glm_log_residual)) + geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
+
