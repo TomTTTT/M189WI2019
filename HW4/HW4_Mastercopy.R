@@ -83,7 +83,7 @@ ggplot(df2, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "gl
                                                                    se = TRUE)
 
 glm_log2<-glm(loggain~density, data=df2, family=gaussian())
-df_mod$glm_log_residual<-resid(glm_log2)
+df2$glm_log_residual<-resid(glm_log2)
 summary(glm_log2)
 loggain_residual2 <- as.data.frame(summary(glm_log2)$coefficients[,2])
 loggain_mean2 <- mean(df2$glm_log_residual)
