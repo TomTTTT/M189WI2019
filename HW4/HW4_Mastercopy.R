@@ -39,11 +39,11 @@ df$loggain<-log(df$gain)
 
 #First do a scatter plot
 #Linear
-ggplot(df, aes(x=density, y=gain)) + geom_point() + geom_smooth(method = "glm", 
+ggplot(df, aes(x=gain, y=density)) + geom_point() + geom_smooth(method = "lm", 
                                                                 method.args = list(family = "gaussian"), se = TRUE)
 
 #Log the gain                                                               
-ggplot(df, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "glm", 
+ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", 
                                                                 method.args = list(family = "gaussian"), 
                                                                 se = TRUE)
 
@@ -51,91 +51,89 @@ ggplot(df, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "glm
 
 #REGRESSION
 #Linear
-glm<-glm(gain~density, data=df, family=gaussian())
+lm<-lm(density~gain, data=df, family=gaussian())
+
 #Bind residuals into data frame to plot
-df$glm_residual<-resid(glm)
-summary(glm)
+df$lm_residual<-resid(lm)
+summary(lm)
 
 #Log
-glm_log<-glm(loggain~density, data=df, family=gaussian())
+lm_log<-lm(density~loggain, data=df, family=gaussian())
 #Bind residuals into data frame to plot
-df$glm_log_residual<-resid(glm_log)
+df$lm_log_residual<-resid(lm_log)
+#Bind fitted values into df
+df$lm_log_fitted<-predict(lm_log)
 
-summary(glm_log)
-loggain_residual <- as.data.frame(summary(glm_log)$coefficients[,2])
-loggain_mean <- mean(df$glm_log_residual)
-
-#density on gain
-glm_log_inverse<-glm(density~loggain, data=df, family=gaussian())
+summary(lm_log)
+loggain_residual <- as.data.frame(summary(lm_log)$coefficients[,2])
+loggain_mean <- mean(df$lm_log_residual)
 
 #RESIDUAL PLOT
 #Linear
-ggplot(df, aes(x=density, y=glm_residual)) + geom_point()
+ggplot(df, aes(x=density, y=lm_residual)) + geom_point()
 
 #Log
-ggplot(df, aes(x=density, y=glm_log_residual)) + geom_point() +
+ggplot(df, aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill="red")
 #This residual plot tells you that the data is not normal
 
-#What if densities are reported wrong. 
-
-
-
-
+##add QQ plot of the residuals 
+qqnorm(df$lm_log_residual)
+qqline(df$lm_log_residual, distribution=qnorm)
 
 # Crossvalidation
 #1
 df2 <- df%>%filter(density != 0.508)
 
-ggplot(df2, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "glm", 
+ggplot(df2, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
                                                                    method.args = list(family = "gaussian"), 
                                                                    se = TRUE)
 
-glm_log2<-glm(loggain~density, data=df2, family=gaussian())
-df2$glm_log_residual<-resid(glm_log2)
-summary(glm_log2)
-loggain_residual2 <- as.data.frame(summary(glm_log2)$coefficients[,2])
-loggain_mean2 <- mean(df2$glm_log_residual)
+lm_log2<-lm(loggain~density, data=df2, family=gaussian())
+df2$lm_log_residual<-resid(lm_log2)
+summary(lm_log2)
+loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
+loggain_mean2 <- mean(df2$lm_log_residual)
 
-ggplot(df2, aes(x=density, y=glm_residual)) + geom_point()
-ggplot(df2, aes(x=density, y=glm_log_residual)) + geom_point() +
+ggplot(df2, aes(x=density, y=lm_residual)) + geom_point()
+ggplot(df2, aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
 
 
 #2
 df3 <- df%>%filter(density != 0.508)
-ggplot(df3, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "glm", 
+ggplot(df3, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
                                                                     method.args = list(family = "gaussian"), 
                                                                     se = TRUE)
 
-glm_log2<-glm(loggain~density, data=df3, family=gaussian())
-df3$glm_log_residual<-resid(glm_log2)
-summary(glm_log2)
-loggain_residual2 <- as.data.frame(summary(glm_log2)$coefficients[,2])
-loggain_mean2 <- mean(df3$glm_log_residual)
+lm_log2<-lm(loggain~density, data=df3, family=gaussian())
+df3$lm_log_residual<-resid(lm_log2)
+summary(lm_log2)
+loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
+loggain_mean2 <- mean(df3$lm_log_residual)
 
-ggplot(df3, aes(x=density, y=glm_residual)) + geom_point()
-ggplot(df3, aes(x=density, y=glm_log_residual)) + geom_point() +
+ggplot(df3, aes(x=density, y=lm_residual)) + geom_point()
+ggplot(df3, aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
 
 
 #3
 df4 <- df%>%filter(density != 0.508)
-ggplot(df4, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "glm", 
+ggplot(df4, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
                                                                     method.args = list(family = "gaussian"), 
                                                                     se = TRUE)
 
-glm_log2<-glm(loggain~density, data=df4, family=gaussian())
-df4$glm_log_residual<-resid(glm_log2)
-summary(glm_log2)
-loggain_residual2 <- as.data.frame(summary(glm_log2)$coefficients[,2])
-loggain_mean2 <- mean(df4$glm_log_residual)
+lm_log2<-lm(loggain~density, data=df4, family=gaussian())
+df4$lm_log_residual<-resid(lm_log2)
+summary(lm_log2)
+loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
+loggain_mean2 <- mean(df4$lm_log_residual)
 
-ggplot(df4, aes(x=density, y=glm_residual)) + geom_point()
-ggplot(df4, aes(x=density, y=glm_log_residual)) + geom_point() +
+ggplot(df4, aes(x=density, y=lm_residual)) + geom_point()
+ggplot(df4, aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
 
