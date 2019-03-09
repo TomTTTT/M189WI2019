@@ -137,3 +137,55 @@ ggplot(df4, aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
 
+
+
+
+
+
+#####
+#Additional question
+#####
+#qqplot
+plot(df$loggain, df$density)
+qqnorm(df$glm_residual)
+qqline(df$glm_log_residual,distribution = qnorm)
+
+#density against loggain
+plot(df$loggain, df$density)
+loggain_686 <- df$loggain[df$density==0.686]
+
+#deviations of loggains from the mean for each density (normal-like but not quite)
+table(df$density)
+density_bin <- c(0.001, 0.08, 0.148, 0.223, 0.318, 0.412, 0.508, 0.604, 0.686)
+loggain_deviation <- c()
+for (density in density_bin){
+  loggain_density <- df$loggain[df$density == density];
+  loggain_density <- loggain_density - mean(loggain_density)
+  loggain_deviation <- c(loggain_deviation, loggain_density)
+}
+hist(loggain_deviation)
+qqnorm(loggain_deviation)
+qqline(loggain_deviation, distribution = qnorm)
+
+#deviations of gains from the mean for each density (perfectly normal)
+gain_deviation <- c()
+for (density in density_bin){
+  gain_density <- df$gain[df$density == density];
+  gain_density <- gain_density - mean(gain_density)
+  gain_deviation <- c(gain_deviation, gain_density)
+}
+hist(gain_deviation)
+qqnorm(gain_deviation)
+qqline(gain_deviation, distribution = qnorm)
+
+#fit the mean gain (residual seems uniform on [-0.1, 0.1])
+mean_gain <- 1:9
+for (i in 1:9){
+  mean_gain[i] <- mean(df$gain[df$density == density_bin[i]])
+}
+plot(mean_gain)
+log_mean_gain <- log(mean_gain)
+plot(log_mean_gain)
+glm_meangain<-glm(log_mean_gain~density_bin, family=gaussian())
+mean_gain_residual<-resid(glm_meangain)
+hist(mean_gain_residual, breaks=20)
