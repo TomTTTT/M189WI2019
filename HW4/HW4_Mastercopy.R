@@ -39,18 +39,15 @@ df$loggain<-log(df$gain)
 
 #First do a scatter plot
 #Linear
-ggplot(df, aes(x=gain, y=density)) + geom_point() + geom_smooth(method = "lm", 
-                                                                method.args = list(family = "gaussian"), se = TRUE)
+ggplot(df, aes(x=gain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
 
 #Log the gain                                                               
-ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", 
-                                                                method.args = list(family = "gaussian"), 
-                                                                se = TRUE)
+ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
 
 
 
 #REGRESSION
-#Linear
+#No transformation
 lm<-lm(density~gain, data=df, family=gaussian())
 
 #Bind residuals into data frame to plot
@@ -69,7 +66,7 @@ loggain_residual <- as.data.frame(summary(lm_log)$coefficients[,2])
 loggain_mean <- mean(df$lm_log_residual)
 
 #RESIDUAL PLOT
-#Linear
+#No transformation
 ggplot(df, aes(x=density, y=lm_residual)) + geom_point()
 
 #Log
@@ -78,7 +75,7 @@ ggplot(df, aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill="red")
 #This residual plot tells you that the data is not normal
 
-##add QQ plot of the residuals 
+#QQ plot of the residuals 
 qqnorm(df$lm_log_residual)
 qqline(df$lm_log_residual, distribution=qnorm)
 
@@ -101,6 +98,9 @@ ggplot(df2, aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
 
+
+
+#Need to chnage the values to filter for for the next 2 
 
 #2
 df3 <- df%>%filter(density != 0.508)
