@@ -137,7 +137,60 @@ ggplot(df4, aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
 
+################################################
+# CROSS VALIDATION UPDATED #
+############################
+# for prediction without density 0,508
+df.cv1 <- df%>%filter(density != 0.508)
 
+ggplot(df.cv1, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "glm", 
+                                                                       method.args = list(family = "gaussian"), 
+                                                                       se = TRUE)
+
+glm_log2<-glm(density~loggain, data=df.cv1, family=gaussian())
+summary(glm_log2)
+
+# density prediction
+y.hat2 <- 1.298422 - (0.216278 * log(38.6))
+
+# residuals
+df.cv1$glm_log_residual<-resid(glm_log2)
+glm_resid_sd2 <- sd(df.cv1$glm_log_residual)
+glm_resid_mean2 <- mean(df.cv1$glm_log_residual)
+
+# interval estimate assuming error is normally distributed
+ci2 <- c(y.hat2 - (1.96 * glm_resid_sd2), y.hat2 + (1.96 * glm_resid_sd2))
+ci2
+
+# for prediction without density 0,001
+df.cv2 <- df%>%filter(density != 0.001)
+
+ggplot(df.cv2, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "glm", 
+                                                                       method.args = list(family = "gaussian"), 
+                                                                       se = TRUE)
+glm_log3<-glm(density~loggain, data=df.cv2, family = gaussian())
+summary(glm_log3)
+
+# density prediction
+y.hat3 <- 1.310114 - (0.219395 * log(38.6))
+
+# residuals
+df.cv2$glm_log_residual <- resid(glm_log3)
+glm_resid_sd3 <- sd(df.cv2$glm_log_residual)
+glm_resid_mean3 <- mean(df.cv2$glm_log_residual)
+
+# interval estimate assuming error is normally distributed
+ci3 <- c(y.hat3 - (1.96 * glm_resid_sd3), y.hat3 + (1.96 * glm_resid_sd3))
+ci3
+
+
+ggplot(df.cv1, aes(x=density, y=glm_residual)) + geom_point()
+ggplot(df.cv1, aes(x=density, y=glm_log_residual)) + geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
+
+
+##################################################################
 
 
 
