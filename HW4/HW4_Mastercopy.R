@@ -42,20 +42,20 @@ df$loggain<-log(df$gain)
 ggplot(df, aes(x=gain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
 
 #Log the gain                                                               
-ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
+loggain_p1<-ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
 
 
 
 #REGRESSION
 #No transformation
-lm<-lm(density~gain, data=df, family=gaussian())
+lm<-lm(density~gain, data=df)
 
 #Bind residuals into data frame to plot
 df$lm_residual<-resid(lm)
 summary(lm)
 
 #Log
-lm_log<-lm(density~loggain, data=df, family=gaussian())
+lm_log<-lm(density~loggain, data=df)
 #Bind residuals into data frame to plot
 df$lm_log_residual<-resid(lm_log)
 #Bind fitted values into df
@@ -64,6 +64,54 @@ df$lm_log_fitted<-predict(lm_log)
 summary(lm_log)
 loggain_residual <- as.data.frame(summary(lm_log)$coefficients[,2])
 loggain_mean <- mean(df$lm_log_residual)
+
+#Log regression with white noise
+df$whitenoise1<- rnorm(90, 0, 0.1)
+df$whitenoise2<- rnorm(90,0, 0.5)
+df$whitenoise3<- rnorm(90, 0, 1)
+
+#Add white noise to each of the log gains and append to data frame 
+df$loggain2<- df$loggain + df$whitenoise1
+df$loggain3<- df$loggain + df$whitenoise2
+df$loggain4<- df$loggain + df$whitenoise3
+
+#Loop that extracts coefficients out of each new regression
+coefficients <- c(as.numeric(lm_log$coefficients[2]))
+for(i in 2:4){
+  eval(parse(text=paste0("
+  lm_log_",i,"<- lm(density~loggain",i,",data=df)
+  coefficients<-append(coefficients,as.numeric(lm_log_",i,"$coefficients[2]))
+")))
+}
+
+#Recall the original loggain model plot
+loggain_p1<-ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE) + 
+  xlim(1.5,9.5) + ylim(0,0.8)
+
+#Loop that creates plots for each of the new regressions
+for(i in 2:4){
+  eval(parse(text=paste0("
+  loggain_p",i,"<-ggplot(df, aes(x=loggain",i,", y=density)) + geom_point() + geom_smooth(method = 'lm', se = TRUE) +
+                                                               xlim(1.5,9.5) + ylim(0,0.8)
+
+                         ")))
+}
+
+#Compile plots
+grid.arrange(loggain_p1,loggain_p2,loggain_p3,loggain_p4)
+
+densitylist<-c(0.686, 0.604, 0.508, 0.412, 0.318, 0.223, 0.148, 0.080,0.001)
+for(i in densitylist){
+eval(parse(text=paste0("
+  residual_",i,"<-ggplot((df %>% filter(density==",i,")), aes(x=density, y=lm_log_residual)) + geom_point() +
+  geom_hline(yintercept = 0, linetype = 'dashed', color = 'red') +
+  geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill='red') + ylim(-.02, .05) 
+")))
+}
+
+grid.arrange(residual_0.001, residual_0.08, residual_0.148,
+             residual_0.223, residual_0.318, residual_0.412, 
+             residual_0.508, residual_0.604, residual_0.686, ncol=3, nrow=3)
 
 #RESIDUAL PLOT
 #No transformation
