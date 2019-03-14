@@ -39,10 +39,14 @@ df$loggain<-log(df$gain)
 
 #First do a scatter plot
 #Linear
-ggplot(df, aes(x=gain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
+linear<-ggplot(df, aes(x=gain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
 
 #Log the gain                                                               
-loggain_p1<-ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
+loggain_p1<-ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE) +
+  ggtitle("Scatter of Logged Gain Values and Densities") +
+  theme(plot.title = element_text(hjust = 0.5)) + xlab("Log(Gain)") + ylab("Density") +
+  annotate("text", x=5, y=0.6, label= "OLS Line\n Density = -.216 + 1.298*Log(Gain)")
+  
 
 
 
@@ -86,16 +90,22 @@ for(i in 2:4){
 
 #Recall the original loggain model plot
 loggain_p1<-ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE) + 
-  xlim(1.5,9.5) + ylim(0,0.8)
+  xlim(1.5,9.5) + ylim(0,0.8) + ggtitle("Scatter of Logged Gain Values and Densities\n No White Noise Added") +
+  theme(plot.title = element_text(hjust = 0.5)) + xlab("Log(Gain)") + ylab("Density") 
 
 #Loop that creates plots for each of the new regressions
 for(i in 2:4){
   eval(parse(text=paste0("
-  loggain_p",i,"<-ggplot(df, aes(x=loggain",i,", y=density)) + geom_point() + geom_smooth(method = 'lm', se = TRUE) +
-                                                               xlim(1.5,9.5) + ylim(0,0.8)
+  loggain_p",i,"<-ggplot(df, aes(x=loggain",i,", y=density)) + geom_point() + geom_smooth(method = 'lm', se = TRUE) + xlim(1.5,9.5) +
+  ylim(0,0.8) + theme(plot.title = element_text(hjust = 0.5)) + xlab('Log(Gain)') + ylab('Density') 
 
                          ")))
 }
+
+#Add special titles to graphs
+loggain_p2 <- loggain_p2 + ggtitle("Scatter of Logged Gain Values and Densities\n White Noise ~ N(0,0.1)")
+loggain_p3 <- loggain_p3+ ggtitle("Scatter of Logged Gain Values and Densities\n White Noise ~ N(0,0.5)")
+loggain_p4 <- loggain_p4 + ggtitle("Scatter of Logged Gain Values and Densities\n White Noise ~ N(0,1)")
 
 #Compile plots
 grid.arrange(loggain_p1,loggain_p2,loggain_p3,loggain_p4)
@@ -128,62 +138,62 @@ qqnorm(df$lm_log_residual)
 qqline(df$lm_log_residual, distribution=qnorm)
 
 # Crossvalidation
-#1
-df2 <- df%>%filter(density != 0.508)
-
-ggplot(df2, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
-                                                                   method.args = list(family = "gaussian"), 
-                                                                   se = TRUE)
-
-lm_log2<-lm(loggain~density, data=df2, family=gaussian())
-df2$lm_log_residual<-resid(lm_log2)
-summary(lm_log2)
-loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
-loggain_mean2 <- mean(df2$lm_log_residual)
-
-ggplot(df2, aes(x=density, y=lm_residual)) + geom_point()
-ggplot(df2, aes(x=density, y=lm_log_residual)) + geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
-
-
-
-#Need to chnage the values to filter for for the next 2 
-
-#2
-df3 <- df%>%filter(density != 0.508)
-ggplot(df3, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
-                                                                    method.args = list(family = "gaussian"), 
-                                                                    se = TRUE)
-
-lm_log2<-lm(loggain~density, data=df3, family=gaussian())
-df3$lm_log_residual<-resid(lm_log2)
-summary(lm_log2)
-loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
-loggain_mean2 <- mean(df3$lm_log_residual)
-
-ggplot(df3, aes(x=density, y=lm_residual)) + geom_point()
-ggplot(df3, aes(x=density, y=lm_log_residual)) + geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
-
-
-#3
-df4 <- df%>%filter(density != 0.508)
-ggplot(df4, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
-                                                                    method.args = list(family = "gaussian"), 
-                                                                    se = TRUE)
-
-lm_log2<-lm(loggain~density, data=df4, family=gaussian())
-df4$lm_log_residual<-resid(lm_log2)
-summary(lm_log2)
-loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
-loggain_mean2 <- mean(df4$lm_log_residual)
-
-ggplot(df4, aes(x=density, y=lm_residual)) + geom_point()
-ggplot(df4, aes(x=density, y=lm_log_residual)) + geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
+# #1
+# df2 <- df%>%filter(density != 0.508)
+# 
+# ggplot(df2, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
+#                                                                    method.args = list(family = "gaussian"), 
+#                                                                    se = TRUE)
+# 
+# lm_log2<-lm(loggain~density, data=df2, family=gaussian())
+# df2$lm_log_residual<-resid(lm_log2)
+# summary(lm_log2)
+# loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
+# loggain_mean2 <- mean(df2$lm_log_residual)
+# 
+# ggplot(df2, aes(x=density, y=lm_residual)) + geom_point()
+# ggplot(df2, aes(x=density, y=lm_log_residual)) + geom_point() +
+#   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+#   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
+# 
+# 
+# 
+# #Need to chnage the values to filter for for the next 2 
+# 
+# #2
+# df3 <- df%>%filter(density != 0.508)
+# ggplot(df3, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
+#                                                                     method.args = list(family = "gaussian"), 
+#                                                                     se = TRUE)
+# 
+# lm_log2<-lm(loggain~density, data=df3, family=gaussian())
+# df3$lm_log_residual<-resid(lm_log2)
+# summary(lm_log2)
+# loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
+# loggain_mean2 <- mean(df3$lm_log_residual)
+# 
+# ggplot(df3, aes(x=density, y=lm_residual)) + geom_point()
+# ggplot(df3, aes(x=density, y=lm_log_residual)) + geom_point() +
+#   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+#   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
+# 
+# 
+# #3
+# df4 <- df%>%filter(density != 0.508)
+# ggplot(df4, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
+#                                                                     method.args = list(family = "gaussian"), 
+#                                                                     se = TRUE)
+# 
+# lm_log2<-lm(loggain~density, data=df4, family=gaussian())
+# df4$lm_log_residual<-resid(lm_log2)
+# summary(lm_log2)
+# loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
+# loggain_mean2 <- mean(df4$lm_log_residual)
+# 
+# ggplot(df4, aes(x=density, y=lm_residual)) + geom_point()
+# ggplot(df4, aes(x=density, y=lm_log_residual)) + geom_point() +
+#   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+#   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
 
 ################################################
 # CROSS VALIDATION UPDATED #
