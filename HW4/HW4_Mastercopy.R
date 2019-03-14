@@ -69,7 +69,24 @@ summary(lm_log)
 loggain_residual <- as.data.frame(summary(lm_log)$coefficients[,2])
 loggain_mean <- mean(df$lm_log_residual)
 
-#Log regression with white noise
+
+#RESIDUAL PLOT
+#No transformation
+ggplot(df, aes(x=density, y=lm_residual)) + geom_point()
+
+#Log
+ggplot(df, aes(x=density, y=lm_log_residual)) + geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill="red")
+#This residual plot tells you that the data is not normal
+
+#QQ plot of the residuals 
+qqnorm(df$lm_log_residual, main = "Q-Q Plot of Residuals")
+qqline(df$lm_log_residual, distribution=qnorm)
+
+
+######What if there is measurement error?
+#Log regression with added white noise
 df$whitenoise1<- rnorm(90, 0, 0.1)
 df$whitenoise2<- rnorm(90,0, 0.5)
 df$whitenoise3<- rnorm(90, 0, 1)
@@ -110,12 +127,15 @@ loggain_p4 <- loggain_p4 + ggtitle("Scatter of Logged Gain Values and Densities\
 #Compile plots
 grid.arrange(loggain_p1,loggain_p2,loggain_p3,loggain_p4)
 
+#####Look at residuals for each of the 9 densities
+#Make residual plots for each density
 densitylist<-c(0.686, 0.604, 0.508, 0.412, 0.318, 0.223, 0.148, 0.080,0.001)
 for(i in densitylist){
 eval(parse(text=paste0("
   residual_",i,"<-ggplot((df %>% filter(density==",i,")), aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_hline(yintercept = 0, linetype = 'dashed', color = 'red') +
-  geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill='red') + ylim(-.02, .05) 
+  geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill='red') + ylim(-.02, .05) +
+  xlab('Density') +  ylab('Residuals') + ggtitle('Density = ",i," g/cm^3') + theme(plot.title = element_text(hjust = 0.5))
 ")))
 }
 
@@ -123,19 +143,9 @@ grid.arrange(residual_0.001, residual_0.08, residual_0.148,
              residual_0.223, residual_0.318, residual_0.412, 
              residual_0.508, residual_0.604, residual_0.686, ncol=3, nrow=3)
 
-#RESIDUAL PLOT
-#No transformation
-ggplot(df, aes(x=density, y=lm_residual)) + geom_point()
 
-#Log
-ggplot(df, aes(x=density, y=lm_log_residual)) + geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill="red")
-#This residual plot tells you that the data is not normal
 
-#QQ plot of the residuals 
-qqnorm(df$lm_log_residual)
-qqline(df$lm_log_residual, distribution=qnorm)
+
 
 # Crossvalidation
 # #1
