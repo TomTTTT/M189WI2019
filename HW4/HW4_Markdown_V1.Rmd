@@ -1,0 +1,537 @@
+---
+title: Calibrating Snow Gauge
+author: Austin Clark, Timothy Lee, Andy Schleicher, Mingcan Tang, Aiden Yoon, Benson Wu
+date: March 15, 2019
+output: pdf_document
+---
+
+#Abstract
+###Method
+In this analysis, we look at how we can predict the density of snow when we are given gain values (number of gamma photons that pass through the detector). The analysis was conducted on a simulation that used polyethylene blocks to measure gains. Methods used in this analysis include Ordinary Least Squares regression, Polynomial Regression, Prediction intervals, Chi Square Test, Kolmogorov-Smirnov Test, Cross Validation, and Shapiro-Wilk test. 
+
+###Results
+We find that we must log the gain values before we run a regression in order to optimize OLS. The residuals of the OLS equation did not appear to have residuals are not normally distributed yet we will still proceed to create prediction intervals because our sample size is relatively large and by the central limit theorem will tend to normality in it's limit. 
+
+###Conclusions
+Our analysis shows that an ordinary least squares regression may not be the best model despite having a high R^2 value; other models should be explored in order to accomplish the goal of converting gain into density. 
+
+
+
+\pagebreak
+
+
+#Background
+```{r, echo=F,message=FALSE, warning=FALSE}
+path<-"C:/Users/buwen/"
+setwd(paste0(path,'Documents/Git/M189WI2019/HW4'))
+
+#Load dependencies
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+library(stargazer)
+library(tree)
+library(rattle)
+library(rpart)
+library(rpart.plot)
+library(party)
+library(ggsci)
+library(Hmisc)
+library(lattice)
+library(knitr)
+library(purrr)
+library(OneR)
+library(nnet)
+library(dplyr)
+
+#Load Data
+df<-read.csv("data1.txt", sep="")
+
+```
+
+
+Since it would not be feasible to place gauges at watershed areas to measure water supply, snow gauges have been implemented to study snow-pack settling, snow-melt runoff, avalanches, and the relationship between rain on snow. The snow gauge consists of a cesium-137 radioactive source and an energy detector mounted on separate vertical poles approximately 70cm apart. 
+
+If each molecule acts independently of each other, then the probability that a 
+This probability can be re-expressed as 
+$$e^{m log(p)} = e^{bx}$$
+where x, a density, is proportional to m, the number of molecules.
+
+
+#Data Description
+The data is from a calibration run of USDA (United States Department of Agriculture) Forest Service's snow gauge located in the Central Sierra Nevada mountain range near Soda Springs. In the runs, polyethylene blocks of known densities that simulate snow are placed between two poles of the snow gauge that takes readings on the blocks. Then, for each polyethylene block, 30 measurements of an amplified version of gamma photon count are made by the detector; we call this gauge measurement the "gain." The data set for this analysis has 10 measurements for each of 9 densities in $g/cm^3$ of polyethylene. 
+
+However, there can be some challenges presented with the data. There is a decrease in networks in northern regions where and few stations are in the mountain regions because these networks have to be maintained by humans, so it might not be the easiest task to manage these networks. In addition, biases may occur across different regions/countries whether it be due to differences in instruments, differences in data processing, variation in certain weather variables such as wind^1^, debris collection or clogging in the gauge funnels^1^. 
+
+
+#Fitting
+Our first step was to plot each point with gain as the X-Axis and density as the Y-Axis. This was done in order for us to be able to get a quick glance of our data to see if estimating an ordinary least squares line would be appropriate. When we see our data, it's apparent that there is not a linear relationship with it. We decided to log the density in order to see if this would create a scatter plot that appeared to be more linear. 
+
+```{r, echo=F,message=FALSE, warning=FALSE}
+#Take log of gain 
+df$loggain<-log(df$gain)
+
+#First do a scatter plot
+#Linear
+linear<-ggplot(df, aes(x=gain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
+
+#Log the gain                                                               
+loggain_p1<-ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE) +
+  ggtitle("Scatter of Logged Gain Values and Densities") +
+  theme(plot.title = element_text(hjust = 0.5)) + xlab("Log(Gain)") + ylab("Density") +
+  annotate("text", x=5, y=0.6, label= "OLS Line\n Density = -.216 + 1.298*Log(Gain)")
+  
+
+
+#REGRESSION
+#No transformation
+lm<-lm(density~gain, data=df)
+
+#Bind residuals into data frame to plot
+df$lm_residual<-resid(lm)
+summary(lm)
+
+#Log
+lm_log<-lm(density~loggain, data=df)
+#Bind residuals into data frame to plot
+df$lm_log_residual<-resid(lm_log)
+#Bind fitted values into df
+df$lm_log_fitted<-predict(lm_log)
+
+summary(lm_log)
+loggain_residual <- as.data.frame(summary(lm_log)$coefficients[,2])
+loggain_mean <- mean(df$lm_log_residual)
+
+sd(df$lm_log_residual)
+mean(df$gain)
+
+ypredicted = function(x){
+  y= 1.298422- .216278*(log(x))
+  return(y)
+}
+
+interval = function(z,x){
+  
+  int.size= z*sd(df$lm_log_residual)*sqrt(1/length(df$density)+((log(x)-mean(df$loggain))^2)/
+                                            ((length(df$density)-1)*var(df$loggain)))
+  return(int.size)
+  
+}
+
+```
+
+
+After logging the density, it was apparent that an ordinary least squares line would fit much better compared to the unlogged equivalent. In order to see if the logged data was actually a better fit, we decided to compare the R-squared values for each version. The R-Squared value for the original data is 0.8157 whereas the R-Squared value for the logged version is 0.9958. Based on the visual scatter plots as well as the R-Squared values, we can conclude that it will be better to use the logged data for our ordinary least squares regression. We can examine the residuals of this model in the following plot. 
+
+```{r}
+#RESIDUAL PLOT
+#Log
+ggplot(df, aes(x=density, y=lm_log_residual)) + geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill="red") +
+  ggtitle("OLS Residual Plot") + ylab("Residuals") + xlab("Density") + theme(plot.title = element_text(hjust = 0.5))
+  
+```
+
+
+From this point forward, our analysis on the data using ordinary least squares will revolve around the logged version of our data set. 
+
+After plotting and fitting an ordinary least squares estimate onto our logged data, our next step was to analyze the distribution of the residuals. In order to accomplish this, we created a Q-Q plot for the residuals. Looking at the QQ-plot its seems as if the distribution of the residuals is not normal since the data doesn't follow the trend of being on the normal in the center and tailing off only towards the end. Since the ordinary least squares model attempts to minimize the L-2 norm of the fitted line and the observed point, it is under the assumption that the noise (residuals) are normally distributed. However, from our QQ plot, we can see that this is not the case, implying that using ordinary least squares regression may not be the best model for our data. 
+
+```{r}
+#QQ plot of the residuals 
+qqnorm(df$lm_log_residual, main = "Q-Q Plot of Residuals")
+qqline(df$lm_log_residual, distribution=qnorm)
+```
+
+
+Another potential problem that could arise from our data set would be if our data was not reported exactly. Our approach to this was to add some random noise to our original data set, and repeat the same process as above. The noise values we added were each normally distributed; we had three different sets of noise which differed in variance values of .1, .5, and 1 for the density. The resulting scatter plots with fitted estimated is shown below:
+
+```{r}
+
+
+######What if there is measurement error?
+#Log regression with added white noise
+df$whitenoise1<- rnorm(90, 0, 0.1)
+df$whitenoise2<- rnorm(90,0, 0.5)
+df$whitenoise3<- rnorm(90, 0, 1)
+
+#Add white noise to each of the log gains and append to data frame 
+df$loggain2<- df$loggain + df$whitenoise1
+df$loggain3<- df$loggain + df$whitenoise2
+df$loggain4<- df$loggain + df$whitenoise3
+
+#Loop that extracts coefficients out of each new regression
+coefficients <- c(as.numeric(lm_log$coefficients[2]))
+for(i in 2:4){
+  eval(parse(text=paste0("
+  lm_log_",i,"<- lm(density~loggain",i,",data=df)
+  coefficients<-append(coefficients,as.numeric(lm_log_",i,"$coefficients[2]))
+")))
+}
+
+#Recall the original loggain model plot
+loggain_p1<-ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE) + 
+  xlim(1.5,9.5) + ylim(0,0.8) + ggtitle("Scatter of Logged Gain Values and Densities\n No White Noise Added") +
+  theme(plot.title = element_text(hjust = 0.5)) + xlab("Log(Gain)") + ylab("Density") 
+
+#Loop that creates plots for each of the new regressions
+for(i in 2:4){
+  eval(parse(text=paste0("
+  loggain_p",i,"<-ggplot(df, aes(x=loggain",i,", y=density)) + geom_point() + geom_smooth(method = 'lm', se = TRUE) + xlim(1.5,9.5) +
+  ylim(0,0.8) + theme(plot.title = element_text(hjust = 0.5)) + xlab('Log(Gain)') + ylab('Density') 
+
+                         ")))
+}
+
+#Add special titles to graphs
+loggain_p2 <- loggain_p2 + ggtitle("Scatter of Logged Gain Values and Densities\n White Noise ~ N(0,0.1)")
+loggain_p3 <- loggain_p3+ ggtitle("Scatter of Logged Gain Values and Densities\n White Noise ~ N(0,0.5)")
+loggain_p4 <- loggain_p4 + ggtitle("Scatter of Logged Gain Values and Densities\n White Noise ~ N(0,1)")
+
+#Compile plots
+grid.arrange(loggain_p1,loggain_p2,loggain_p3,loggain_p4)
+
+```
+
+
+Looking at the scatter plots, it seems that adding noise makes the ordinary least squares model fit more poorly. So in the event where our data was actually reported incorrectly, it would mean that our least squares line would not be a good fit. 
+
+Another question we wanted to explore is if the polyethylene blocks were not measured in random order, would this have any effect on our analysis. In order to check this, we plotted the regression line and acquired the residuals for each density one density group at a time. The results are below: 
+
+```{r}
+
+#####Look at residuals for each of the 9 densities
+#Make residual plots for each density
+densitylist<-c(0.686, 0.604, 0.508, 0.412, 0.318, 0.223, 0.148, 0.080,0.001)
+for(i in densitylist){
+eval(parse(text=paste0("
+  
+  residual_",i,"<-ggplot((df %>% filter(density==",i,")), aes(x=density, y=lm_log_residual)) + geom_point() +
+  geom_hline(yintercept = 0, linetype = 'dashed', color = 'red') +
+  geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill='red') + ylim(-.02, .05) +
+  xlab('Density') +  ylab('Residuals') + ggtitle('Density = ",i," g/cm^3') + theme(plot.title = element_text(hjust = 0.5))
+")))
+}
+
+
+
+grid.arrange(residual_0.001, residual_0.08, residual_0.148,
+             residual_0.223, residual_0.318, residual_0.412, 
+             residual_0.508, residual_0.604, residual_0.686, ncol=3, nrow=3)
+
+
+
+```
+
+
+Based on the residual plots below, it seems like there is no pattern between the order of density measurements and the residuals, meaning the consecutive measurements are most likely independent. 
+
+
+#PREDICTION
+One of the goals of this experiment is to convert the gain readings into density values while the gauge is in operation. In order to do this we want to predict the value of the density of the snow-pack through linear regression. To be specific, we will use the bivariate case of simple linear regression due to our two variables of density and gain where density is our response variable and gain is our explanatory variable. We are interested in predicting the snow-pack density from the gain readings of 38.6 and 426 .7. These two values were chosen because they are the average gains for the 0.508 and 0.001 densities. We wish to create intervals around our regression line so that for a given log gain reading (the explanatory variable) we can give an interval estimate with a certain confidence level for the expected density of the snow (the response variable).  We analyzed the distribution of the residuals for the response variable in the fitting section above and found that the residuals are not normally distributed yet we will still proceed to create prediction intervals because our sample size is relatively large and by the central limit theorem will tend to normality in it's limit but it is worth noting that the residuals are not normal and that could have some effect on our intervals. 
+
+We use the following formulas for the standard error of our residuals and the prediction interval.
+
+$$\hat{y} \pm t^{*}_{n-2}s_y \sqrt{\frac{1}{n} + \frac{(x^{*} - \bar{x})^2}{(n-1)s^{2}_{x}}}$$
+$$s_y =  \sqrt \frac {\sum(y_i - \hat{y_i})^2}{n - 2}$$
+
+We calculated the standard error of the residuals = 0.0146 and the average value of the gain = 142.5667
+
+Note that we have a large sample size so we use Z statistics instead of Student T statistics. We can create bands around $\hat{y}$ by changing the Z statistic for different confidence levels. 
+
+The predicted density for a gain of 38.6 is = 0.508
+The predicted density for a gain of 142.5667 is = 0.2257242
+For a gain reading of 38.6 we are 95% confident that the density will be contained in the interval [0.5041, 0.5118]
+For a gain reading of 426.7 we are 95% confident that the density will be contained in the interval [ 0.2223, 0.22903]
+
+
+
+#Cross-Validation
+
+To test how well our OLS estimation works, we omit densities 0.508 g/cm^3^ and 0.001 g/cm^3^ separately and fit an OLS line to the data. With the deletion of 0.508 g/cm^3^, our OLS equation is Density = 1.298422 - 0.216278 * log(Gain)
+
+With the deletion of 0.001 g/cm^3^, a gain of 38.6 gives us a predicted density value of .5083039. The confidence interval is 95% [0.4781722, 0.5384356], and the actual density of 0.508 falls well within the confidence interval. 
+
+We repeat this by omitting observations that have a  density of  0.01 g/cm^3^. Our OLD equation is Density = 1.310114 - 0.219395 * log(Gain)). With this equation, we have a predicted density value of 0.5086087 and a 95% confidence interval of [0.4801942, 0.5370232]. So, our prediction is not overfitted. 
+
+We can see from the residual plots that the residual plots are still not normal. 
+
+```{r}
+
+################################################
+# CROSS VALIDATION UPDATED #
+############################
+# for prediction without density 0,508
+df.cv1 <- df%>%filter(density != 0.508)
+
+ggplot(df.cv1, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "glm", 
+                                                                       method.args = list(family = "gaussian"), 
+                                                                       se = TRUE)
+
+glm_log2<-glm(density~loggain, data=df.cv1, family=gaussian())
+summary(glm_log2)
+
+# density prediction
+y.hat2 <- 1.298422 - (0.216278 * log(38.6))
+
+# residuals
+df.cv1$glm_log_residual<-resid(glm_log2)
+glm_resid_sd2 <- sd(df.cv1$glm_log_residual)
+glm_resid_mean2 <- mean(df.cv1$glm_log_residual)
+
+# interval estimate assuming error is normally distributed
+ci2 <- c(y.hat2 - (1.96 * glm_resid_sd2), y.hat2 + (1.96 * glm_resid_sd2))
+ci2
+
+# for prediction without density 0,001
+df.cv2 <- df%>%filter(density != 0.001)
+
+ggplot(df.cv2, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "glm", 
+                                                                       method.args = list(family = "gaussian"), 
+                                                                       se = TRUE)
+glm_log3<-glm(density~loggain, data=df.cv2, family = gaussian())
+summary(glm_log3)
+
+# density prediction
+y.hat3 <- 1.310114 - (0.219395 * log(38.6))
+
+# residuals
+df.cv2$glm_log_residual <- resid(glm_log3)
+glm_resid_sd3 <- sd(df.cv2$glm_log_residual)
+glm_resid_mean3 <- mean(df.cv2$glm_log_residual)
+
+# interval estimate assuming error is normally distributed
+ci3 <- c(y.hat3 - (1.96 * glm_resid_sd3), y.hat3 + (1.96 * glm_resid_sd3))
+ci3
+
+
+
+cv_p1<-ggplot(df.cv1, aes(x=density, y=lm_log_residual)) + geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red")  +
+  ggtitle("OLS Residual Plot\n with density = 0.508 removed") + ylab("Residuals") + xlab("Density") + theme(plot.title = element_text(hjust = 0.5))
+
+cv_p2<-ggplot(df.cv2, aes(x=density, y=lm_log_residual)) + geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  ggtitle("OLS Residual Plot\n with density = 0.001 removed") + ylab("Residuals") + xlab("Density") + theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(cv_p1, cv_p2)
+```
+
+
+Now, we try to fit a polynomial regression to our data to see if it is a better fit. First, we plot the R^2 values to see how as we increase the degree of the polynomial regression, and we see that the R^2 increases rapidly. 
+
+
+```{r}
+
+#####Polynomial cross validation
+
+#Plot of how the R^2 values changes. 
+d.max = 30
+R.square = rep(NA, d.max)
+for (d in 1:d.max){
+  fit = lm(density ~ poly(gain, d, raw=TRUE), data=df)
+  R.square[d] = summary(fit)$r.squared
+}
+plot(1:d.max, R.square, xlab = "Degree", ylab = "R-squared", lwd = 2, col = "blue", pch = 5, main="Plot of R^2 as Degree Increases")
+lines(1:d.max, R.square, type='l', lwd = 2, col = "blue")
+
+#Plot of regression lines 
+plot(df$gain, df$density, pch = 16)
+pts <- seq(0, 600, length.out=100)
+for (d in 1:10){
+  fit <- lm(density ~ poly(gain, d, raw=TRUE), data=df)
+  val <- predict(fit, data.frame(gain= pts))
+  lines(pts, val, col=rainbow(10)[d], lwd = 2)
+}
+
+
+```
+
+We also plot the varying degrees of polynomial regression equations against the data. The R^2 value that we obtain from the OLS equation of density on logged gain is 0.9958.
+The model that we have selected from polynomial regression of degree 2 has an R^2 of 0.9508050. 
+
+```{r}
+
+#It seems like two might be the best, but let's compare MSE
+library(caret)
+cv.degree.d <- function(k, n, d){
+  flds<-createFolds(df$density,3)
+  cv.mse <- rep(0, k)
+  for (round in 1:3){
+    test.idx<-flds[[round]]
+    y <- df$density[-test.idx]
+    x <- df$gain[-test.idx]
+    fit <- lm(y ~ poly(x, d, raw=TRUE), data=df)
+    y.hat <- predict(fit, data.frame(x = df$gain[test.idx]))
+    cv.mse[round] <- sum((df$density[test.idx] - y.hat)^2)/length(test.idx)
+  }
+  return (mean(cv.mse))
+}
+
+k <- 3
+n <- 90
+d.max <- 9
+mse <- rep(0, d.max)
+for (d in 1:d.max){
+  mse[d] <- cv.degree.d(k, n, d)
+}
+plot(1:d.max, mse, xlab = "Degree", ylab = "MSE", lwd = 2, col = "blue", pch = 5, main="MSE as Degree in\n Polynomial Regression Changes")
+lines(1:d.max, mse, type='l', lwd = 2, col = "blue")
+
+```
+
+{insert graphs}
+
+We now use Cross Validation to see how the different degrees compare across different models. For each degree starting at 1, we chose to perform a 3 fold cross validation where such that we partition our dataset randomly into three parts and perform polynomial regression on two combinations of partitions at a time, then calculate the mean of the MSE for each of the 3 iterations. We iterate this up to 9 degrees. We see that the first minimum MSE occurs at the 6th degree, then we see that we have another lower MSE at the 8th degree. 
+
+Clearly, R^2 may not be the best criterion to see if we have a best fit line because we run into the problem of overfitting our lines. We must be careful about how we use R^2 as a criterion to choose the best model. 
+
+
+#Additional Hypothesis
+
+Despite the prior attempts to model the relation of density with respect to log gain with a linear and polynomial regression, we did note the non-normal distributions of the regression residuals, which is not in total compliance with the linear regression assumption. In order to better understand the data and residual distributions, we seek to explore this relationship from a different perspective. We investigate this relationship by raising and attempt to answer the following additional questions.
+
+#Q: Is there a coherent distribution for the gains across densities?
+
+In an attempt to answer this question, we first explain the reason why this question is of interest to us. Although the overarching goal for our analysis is to predict densities based on a given observed gain, the setup of the experiment implies the density is fixed a priori albeit unknown, and that the gain is only observed a posteriori with certain observation errors (and potentially systematic errors with which we are not concerned here). Therefore, it is intuitive to assume that errors occur for the gains around the "correct" gain for each density. This is different from prior attempt of modeling because in the earlier sections, the inverted direction of regression implies an assumption that errors occur for the densities around the correct densities for each gain observed. Having spotted a potential reason for which the residuals do not seem to follow any particular or easily-recognizable distribution, we start our analysis here.
+
+In order to analyze the distribution of gains, we subtract the mean gain for each density from the gains for the 9 densities respectively to obtain the observation errors. We then plot the histogram and Q-Q plot of these errors below. 
+
+```{r}
+
+#####
+#Additional question
+#####
+
+#deviations of loggains from the mean for each density (normal-like but not quite)
+table(df$density)
+density_bin <- c(0.001, 0.08, 0.148, 0.223, 0.318, 0.412, 0.508, 0.604, 0.686)
+loggain_deviation <- c()
+for (density in density_bin){
+  loggain_density <- df$loggain[df$density == density];
+  loggain_density <- loggain_density - mean(loggain_density)
+  loggain_deviation <- c(loggain_deviation, loggain_density)
+}
+hist(loggain_deviation)
+qqnorm(loggain_deviation)
+qqline(loggain_deviation, distribution = qnorm)
+
+```
+
+
+ 
+
+
+
+The Gaussian-like histogram and the Q-Q plot invoked our suspicions that the errors may be normally distributed. A further test of normality through chi-square distribution yields a p-value of 0.9414. A Shapiro-Wilk normality test yields a p-value of 0.2024, and a Komogorov-Smirov test for normality yields a p-value of 0.9991. These results strongly suggest that these gain errors are indeed normally distributed around the mean gain for respective densities. Do note that we are not assuming that these gain errors are consistently distributed across different densities. In fact, further analysis shows that these gain errors do not come from the same normal distribution.
+
+#Q: How does the densities relate to the gain error distributions?
+
+In order to better understand whether gain error distributions as described above is related to their respective densities at all, we first plot a scatter plot of these gain errors with respect to the order of observations. Thus, every 10 consecutive gain errors are related to the same density, we can directly observe the relationship between density and gain errors. 
+
+```{r}
+
+#deviations of gains from the mean for each density (perfectly normal, dependent)
+gain_deviation <- c()
+for (density in density_bin){
+  gain_density <- df$gain[df$density == density];
+  gain_density <- gain_density - mean(gain_density)
+  gain_deviation <- c(gain_deviation, gain_density)
+}
+hist(gain_deviation)
+qqnorm(gain_deviation)
+qqline(gain_deviation, distribution = qnorm)
+
+#chi-square test for normality
+bin_cutoff <- qnorm(c(0,0.2,0.4,0.6,0.8,1), mean=mean(gain_deviation), sd=sd(gain_deviation))
+bin_gain_dev <- table(cut(gain_deviation, breaks=bin_cutoff))
+chisq.test(bin_gain_dev)
+#shapiro-wilk test for normality
+shapiro.test(gain_deviation)
+#k-s test for normality
+ks.test(gain_deviation, rnorm(90,mean=mean(gain_deviation),sd=sd(gain_deviation)))
+
+#scatter plot
+plot(gain_deviation)
+#k-s test for distribution across densities
+ks.test(gain_deviation[1:30],gain_deviation[61:90])
+
+#deviation max and min regression
+gain_deviation_abs <- abs(gain_deviation)
+gain_deviation_abs_max <- 1:9
+for (i in 1:9){
+  gain_deviation_abs_max[i] <- max(gain_deviation_abs)
+}
+
+```
+
+
+As we can observe, a decreasing deviation among the errors is evident as the observation progresses, or the density decreases. Thus, we hypothesize from this plot that the normal distributions of the gain errors decrease in standard deviation as the density decreases. To further this analysis, we perform a K-S test on the first 30 error data and the last 30 error data. The test yields a p-value of 0.0713. Although we cannot reject the possibility that these data come from the same normal distribution, the low p-value does point to the high likelihood that they do not come from an identical distribution. 
+
+#Q: Modeling the mean gain with respect to density with linear regression.
+
+With the knowledge we have gained through the further analyses in this additional hypothesis section, we attempt again to linearly regress the natural log of mean gains against density. Once again, the residues do not follow an easily-recognizable distribution, although the sample size is very limited in this case. This histogram is plotted below.
+
+```{r}
+
+#fit the log mean gain (residual seems uniform on [-0.1, 0.1])
+mean_gain <- 1:9
+for (i in 1:9){
+  mean_gain[i] <- mean(df$gain[df$density == density_bin[i]])
+}
+plot(mean_gain)
+log_mean_gain <- log(mean_gain)
+plot(log_mean_gain)
+glm_meangain<-glm(log_mean_gain~density_bin, family=gaussian())
+mean_gain_residual<-resid(glm_meangain)
+hist(mean_gain_residual, breaks=10)
+#test uniform with chi square test
+chisq.test(table(cut(mean_gain_residual, breaks=seq(-0.1, 0.1, length.out = 9)))) #exp < 5 not reliable
+
+```
+
+Theory
+###Ordinary Least Squares
+Ordinary least squares estimates the unknown parameters in a linear regression model. OLS chooses the parameters of a linear function of a set of explanatory variables by minimizing the sum of the squares of the differences between the observed dependent variable in the data and those predicted by the linear function. In the case where we have one independent variable and one dependent variable, the following is our equation where $y_i$ is the dependent variable and $x_i$ is the independent variable and $\epsilon_i$ is the random error term. 
+
+$$ y_i = \beta_0 + \beta_1 x_i + \epsilon_i$$
+
+#R^2^
+$R^2$, also known as Coefficient of Determination, is used to determine the strength of fit of a linear model. There are multiple ways of calculating $R^2$. The most simple understanding is squaring the correlation coefficient between x and y. But based on the definition, $R^2$ = $\frac{explained variability in y}{ total variability in y}$. Total variability in y is the sum of squares of y and explained variability in y is the difference of sum of squares of x and sum of squares of residuals.
+
+Sum of Squares of y: $$SS_{Total} = \sum (y - \hat{y})^2$$
+Sum of Squares of Residuals: $$SS_{Error} = \sum (e)_{i}^2$$
+Sum of Squares of x: $$SS_{Model} = SS_{Total} - SS_{Error}$$
+
+$R^2 = \frac{SS_{Model}}{SS_{Total}}$
+The higher the $R^2$ value is, the better fit the linear regression has. However, it has been shown that with multiple variables, $R^2$ becomes obsolete as it will get larger even with the addition of junk variables.
+
+
+###Chi-Square Goodness of Fit Test
+To investigate whether the distribution of palindromes follows a poisson distribution, we use Chi-Square Goodness of Fit test. The reason that we believe this test is appropriate for this task is that we are comparing an empirical distribution with a target distribution, with which we can divide the DNA sequence into intervals and compute the corresponding observations and expectations for each bin. The test statistics for Goodness of Fit test is given in the following equation:
+
+$$\chi^2_{m-k-1}$$
+such that m is the number of categories and k is the number of parameters estimated to obtain the expected counts. 
+
+###Polynomial Regression 
+Polynomial regression analyzes the relationship between the independent variable x and the dependent variable y modelled as an nth degree polynomial in x. Polynomial regression fits a nonlinear relationship between the value of x and the corresponding conditional mean of y.
+ 
+$$\displaystyle y=\beta _{0}+\beta _{1}x+\beta _{2}x^{2}+\beta _{3}x^{3}+\cdots +\beta _{n}x^{n}+\varepsilon \,$$
+
+###Mean Squared Error
+The Mean Squared Error measures the average of squares of the errors. The MSE is used in cross validation to determine which model is the best fit for analysis. The equation  is the following: 
+$$\displaystyle \operatorname {MSE} ={\frac {1}{n}}\sum _{i=1}^{n}(Y_{i}-{\hat {Y_{i}}})^{2}$$
+
+###Kolmogorov-Smirnov Test
+The Kolmogorov-Smirnov Test is a nonparametric test that compares a sample with a reference probability distribution. It quantifies a distance between the empirical CDF of the sample and the CDF of the reference distribution. The test statistic is the following: 
+$$\displaystyle D_{n}=\sup _{x}|F_{n}(x)-F(x)|$$
+
+###Shapiro-Wilk test 
+The Shapiro-Wilk test is a statistical test that tests for normality. The null hypothesis is that the sample is normally distributed. The test statistic is the following: 
+
+#CONCLUSION
+Based on our analyses, it is apparent that just because an ordinary least squares model has a high R-squared value, it does not necessarily mean that the model is accurate. Our original problem with using the logged data set with ordinary least squares regression was that the residuals were not normally distributed, indicating that the model does not accurately fit the data. 
+
+If the goal of this analysis was to determine an accurate model for converting gain into density, it is apparent that an ordinary least squares would not be ideal; perhaps researchers can explore other models that will potentially have less drawbacks and inaccuracies. 
