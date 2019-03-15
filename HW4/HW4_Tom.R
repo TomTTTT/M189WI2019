@@ -61,7 +61,7 @@ hist(loggain_deviation)
 qqnorm(loggain_deviation)
 qqline(loggain_deviation, distribution = qnorm)
 
-#deviations of gains from the mean for each density (perfectly normal)
+#deviations of gains from the mean for each density (perfectly normal, dependent)
 gain_deviation <- c()
 for (density in density_bin){
   gain_density <- df$gain[df$density == density];
@@ -72,7 +72,28 @@ hist(gain_deviation)
 qqnorm(gain_deviation)
 qqline(gain_deviation, distribution = qnorm)
 
-#fit the mean gain (residual seems uniform on [-0.1, 0.1])
+#chi-square test for normality
+bin_cutoff <- qnorm(c(0,0.2,0.4,0.6,0.8,1), mean=mean(gain_deviation), sd=sd(gain_deviation))
+bin_gain_dev <- table(cut(gain_deviation, breaks=bin_cutoff))
+chisq.test(bin_gain_dev)
+#shapiro-wilk test for normality
+shapiro.test(gain_deviation)
+#k-s test for normality
+ks.test(gain_deviation, rnorm(90,mean=mean(gain_deviation),sd=sd(gain_deviation)))
+
+#scatter plot
+plot(gain_deviation)
+#k-s test for distribution across densities
+ks.test(gain_deviation[1:30],gain_deviation[61:90])
+
+#deviation max and min regression
+gain_deviation_abs <- abs(gain_deviation)
+gain_deviation_abs_max <- 1:9
+for (i in 1:9){
+  gain_deviation_abs_max[i] <- max(gain_deviation_abs)
+}
+
+#fit the log mean gain (residual seems uniform on [-0.1, 0.1])
 mean_gain <- 1:9
 for (i in 1:9){
   mean_gain[i] <- mean(df$gain[df$density == density_bin[i]])
@@ -82,4 +103,6 @@ log_mean_gain <- log(mean_gain)
 plot(log_mean_gain)
 glm_meangain<-glm(log_mean_gain~density_bin, family=gaussian())
 mean_gain_residual<-resid(glm_meangain)
-hist(mean_gain_residual, breaks=20)
+hist(mean_gain_residual, breaks=10)
+#test uniform with chi square test
+chisq.test(table(cut(mean_gain_residual, breaks=seq(-0.1, 0.1, length.out = 9)))) #exp < 5 not reliable
