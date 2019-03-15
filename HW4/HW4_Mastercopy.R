@@ -71,13 +71,12 @@ loggain_mean <- mean(df$lm_log_residual)
 
 
 #RESIDUAL PLOT
-#No transformation
-ggplot(df, aes(x=density, y=lm_residual)) + geom_point()
-
 #Log
 ggplot(df, aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill="red")
+  geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill="red") +
+  ggtitle("OLS Residual Plot") + ylab("Residuals") + xlab("Density") + theme(plot.title = element_text(hjust = 0.5))
+  
 #This residual plot tells you that the data is not normal
 
 #QQ plot of the residuals 
@@ -132,6 +131,7 @@ grid.arrange(loggain_p1,loggain_p2,loggain_p3,loggain_p4)
 densitylist<-c(0.686, 0.604, 0.508, 0.412, 0.318, 0.223, 0.148, 0.080,0.001)
 for(i in densitylist){
 eval(parse(text=paste0("
+  
   residual_",i,"<-ggplot((df %>% filter(density==",i,")), aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_hline(yintercept = 0, linetype = 'dashed', color = 'red') +
   geom_ribbon(aes(ymin= -loggain_residual[2,1],ymax=loggain_mean+loggain_residual[2,1]),alpha=0.2,fill='red') + ylim(-.02, .05) +
@@ -139,71 +139,14 @@ eval(parse(text=paste0("
 ")))
 }
 
+
+
 grid.arrange(residual_0.001, residual_0.08, residual_0.148,
              residual_0.223, residual_0.318, residual_0.412, 
              residual_0.508, residual_0.604, residual_0.686, ncol=3, nrow=3)
 
 
 
-
-
-# Crossvalidation
-# #1
-# df2 <- df%>%filter(density != 0.508)
-# 
-# ggplot(df2, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
-#                                                                    method.args = list(family = "gaussian"), 
-#                                                                    se = TRUE)
-# 
-# lm_log2<-lm(loggain~density, data=df2, family=gaussian())
-# df2$lm_log_residual<-resid(lm_log2)
-# summary(lm_log2)
-# loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
-# loggain_mean2 <- mean(df2$lm_log_residual)
-# 
-# ggplot(df2, aes(x=density, y=lm_residual)) + geom_point()
-# ggplot(df2, aes(x=density, y=lm_log_residual)) + geom_point() +
-#   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-#   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
-# 
-# 
-# 
-# #Need to chnage the values to filter for for the next 2 
-# 
-# #2
-# df3 <- df%>%filter(density != 0.508)
-# ggplot(df3, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
-#                                                                     method.args = list(family = "gaussian"), 
-#                                                                     se = TRUE)
-# 
-# lm_log2<-lm(loggain~density, data=df3, family=gaussian())
-# df3$lm_log_residual<-resid(lm_log2)
-# summary(lm_log2)
-# loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
-# loggain_mean2 <- mean(df3$lm_log_residual)
-# 
-# ggplot(df3, aes(x=density, y=lm_residual)) + geom_point()
-# ggplot(df3, aes(x=density, y=lm_log_residual)) + geom_point() +
-#   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-#   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
-# 
-# 
-# #3
-# df4 <- df%>%filter(density != 0.508)
-# ggplot(df4, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = "lm", 
-#                                                                     method.args = list(family = "gaussian"), 
-#                                                                     se = TRUE)
-# 
-# lm_log2<-lm(loggain~density, data=df4, family=gaussian())
-# df4$lm_log_residual<-resid(lm_log2)
-# summary(lm_log2)
-# loggain_residual2 <- as.data.frame(summary(lm_log2)$coefficients[,2])
-# loggain_mean2 <- mean(df4$lm_log_residual)
-# 
-# ggplot(df4, aes(x=density, y=lm_residual)) + geom_point()
-# ggplot(df4, aes(x=density, y=lm_log_residual)) + geom_point() +
-#   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-#   geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
 
 ################################################
 # CROSS VALIDATION UPDATED #
@@ -252,10 +195,66 @@ ci3 <- c(y.hat3 - (1.96 * glm_resid_sd3), y.hat3 + (1.96 * glm_resid_sd3))
 ci3
 
 
-ggplot(df.cv1, aes(x=density, y=glm_residual)) + geom_point()
-ggplot(df.cv1, aes(x=density, y=glm_log_residual)) + geom_point() +
+
+cv_p1<-ggplot(df.cv1, aes(x=density, y=lm_log_residual)) + geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red")  +
+  ggtitle("OLS Residual Plot\n with density = 0.508 removed") + ylab("Residuals") + xlab("Density") + theme(plot.title = element_text(hjust = 0.5))
+
+cv_p2<-ggplot(df.cv2, aes(x=density, y=lm_log_residual)) + geom_point() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  geom_ribbon(aes(ymin= -loggain_residual2[2,1],ymax=loggain_mean+loggain_residual2[2,1]),alpha=0.2,fill="red")
+  ggtitle("OLS Residual Plot\n with density = 0.001 removed") + ylab("Residuals") + xlab("Density") + theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(cv_p1, cv_p2)
+
+#####Polynomial cross validation
+
+#Plot of how the R^2 values changes. 
+d.max = 30
+R.square = rep(NA, d.max)
+for (d in 1:d.max){
+  fit = lm(density ~ poly(gain, d, raw=TRUE), data=df)
+  R.square[d] = summary(fit)$r.squared
+}
+plot(1:d.max, R.square, xlab = "Degree", ylab = "R-squared", lwd = 2, col = "blue", pch = 5, main="Plot of R^2 as Degree Increases")
+lines(1:d.max, R.square, type='l', lwd = 2, col = "blue")
+
+#Plot of regression lines 
+plot(df$gain, df$density, pch = 16)
+pts <- seq(0, 600, length.out=100)
+for (d in 1:10){
+  fit <- lm(density ~ poly(gain, d, raw=TRUE), data=df)
+  val <- predict(fit, data.frame(gain= pts))
+  lines(pts, val, col=rainbow(10)[d], lwd = 2)
+}
+
+
+#It seems like two might be the best, but let's compare MSE
+library(caret)
+cv.degree.d <- function(k, n, d){
+  flds<-createFolds(df$density,3)
+  cv.mse <- rep(0, k)
+  for (round in 1:3){
+    test.idx<-flds[[round]]
+    y <- df$density[-test.idx]
+    x <- df$gain[-test.idx]
+    fit <- lm(y ~ poly(x, d, raw=TRUE), data=df)
+    y.hat <- predict(fit, data.frame(x = df$gain[test.idx]))
+    cv.mse[round] <- sum((df$density[test.idx] - y.hat)^2)/length(test.idx)
+  }
+  return (mean(cv.mse))
+}
+
+k <- 3
+n <- 428
+d.max <- 9
+mse <- rep(0, d.max)
+for (d in 1:d.max){
+  mse[d] <- cv.degree.d(k, n, d)
+}
+plot(1:d.max, mse, xlab = "Degree", ylab = "MSE", lwd = 2, col = "blue", pch = 5, main="MSE as Degree in\n Polynomial Regression Changes")
+lines(1:d.max, mse, type='l', lwd = 2, col = "blue")
+
+#6th degree is the best
 
 
 ##################################################################
