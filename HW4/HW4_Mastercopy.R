@@ -69,6 +69,21 @@ summary(lm_log)
 loggain_residual <- as.data.frame(summary(lm_log)$coefficients[,2])
 loggain_mean <- mean(df$lm_log_residual)
 
+sd(df$lm_log_residual)
+mean(df$gain)
+
+ypredicted = function(x){
+  y= 1.298422- .216278*(log(x))
+  return(y)
+}
+
+interval = function(z,x){
+  
+  int.size= z*sd(df$lm_log_residual)*sqrt(1/length(df$density)+((log(x)-mean(df$loggain))^2)/
+                                            ((length(df$density)-1)*var(df$loggain)))
+  return(int.size)
+  
+}
 
 #RESIDUAL PLOT
 #Log
