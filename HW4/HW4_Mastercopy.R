@@ -245,7 +245,7 @@ cv.degree.d <- function(k, n, d){
 }
 
 k <- 3
-n <- 428
+n <- 90
 d.max <- 9
 mse <- rep(0, d.max)
 for (d in 1:d.max){
@@ -254,7 +254,7 @@ for (d in 1:d.max){
 plot(1:d.max, mse, xlab = "Degree", ylab = "MSE", lwd = 2, col = "blue", pch = 5, main="MSE as Degree in\n Polynomial Regression Changes")
 lines(1:d.max, mse, type='l', lwd = 2, col = "blue")
 
-#6th degree is the best
+#6th and 8th degree is the best
 
 
 ##################################################################
