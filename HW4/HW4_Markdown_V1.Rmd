@@ -53,10 +53,12 @@ df<-read.csv("data1.txt", sep="")
 
 Since it would not be feasible to place gauges at watershed areas to measure water supply, snow gauges have been implemented to study snow-pack settling, snow-melt runoff, avalanches, and the relationship between rain on snow. The snow gauge consists of a cesium-137 radioactive source and an energy detector mounted on separate vertical poles approximately 70cm apart. 
 
-If each molecule acts independently of each other, then the probability that a 
+If each molecule acts independently of each other, then the probability a gamma ray successfully arrives at the detector is $p^m$ where p is the probability that a single molecule will neither absorb nor bounce the gamma ray, and $m$ is the
+number of molecules in a straight line path from the source to the detector. 
+
 This probability can be re-expressed as 
 $$e^{m log(p)} = e^{bx}$$
-where x, a density, is proportional to m, the number of molecules.
+where x is a density in grams/cm^3^ and is proportional to m, the number of molecules.
 
 
 #Data Description
@@ -74,23 +76,30 @@ df$loggain<-log(df$gain)
 
 #First do a scatter plot
 #Linear
-linear<-ggplot(df, aes(x=gain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
+gain_p1<-ggplot(df, aes(x=gain, y=density)) + geom_point() +
+  geom_smooth(method = "lm", se = TRUE) + 
+  ggtitle("Scatter of Gain Values and Densities") + 
+  theme(plot.title = element_text(hjust=0.5)) + xlab("Gain") +
+  ylab("Density") + annotate("text", x=200, y=0.6, label= "OLS Line\n Density = 0.549724 -0.001533*Gain")
 
 #Log the gain                                                               
 loggain_p1<-ggplot(df, aes(x=loggain, y=density)) + geom_point() + geom_smooth(method = "lm", se = TRUE) +
   ggtitle("Scatter of Logged Gain Values and Densities") +
   theme(plot.title = element_text(hjust = 0.5)) + xlab("Log(Gain)") + ylab("Density") +
   annotate("text", x=5, y=0.6, label= "OLS Line\n Density = -.216 + 1.298*Log(Gain)")
-  
+
+grid.arrange(gain_p1, loggain_p1)
+```
 
 
+```{r, echo=F,message=FALSE, warning=FALSE}
 #REGRESSION
 #No transformation
 lm<-lm(density~gain, data=df)
 
 #Bind residuals into data frame to plot
 df$lm_residual<-resid(lm)
-summary(lm)
+#summary(lm)
 
 #Log
 lm_log<-lm(density~loggain, data=df)
@@ -99,12 +108,12 @@ df$lm_log_residual<-resid(lm_log)
 #Bind fitted values into df
 df$lm_log_fitted<-predict(lm_log)
 
-summary(lm_log)
+#summary(lm_log)
 loggain_residual <- as.data.frame(summary(lm_log)$coefficients[,2])
 loggain_mean <- mean(df$lm_log_residual)
 
-sd(df$lm_log_residual)
-mean(df$gain)
+#sd(df$lm_log_residual)
+#mean(df$gain)
 
 ypredicted = function(x){
   y= 1.298422- .216278*(log(x))
@@ -124,7 +133,7 @@ interval = function(z,x){
 
 After logging the density, it was apparent that an ordinary least squares line would fit much better compared to the unlogged equivalent. In order to see if the logged data was actually a better fit, we decided to compare the R-squared values for each version. The R-Squared value for the original data is 0.8157 whereas the R-Squared value for the logged version is 0.9958. Based on the visual scatter plots as well as the R-Squared values, we can conclude that it will be better to use the logged data for our ordinary least squares regression. We can examine the residuals of this model in the following plot. 
 
-```{r}
+```{r, echo=F,message=FALSE, warning=FALSE}
 #RESIDUAL PLOT
 #Log
 ggplot(df, aes(x=density, y=lm_log_residual)) + geom_point() +
@@ -139,7 +148,7 @@ From this point forward, our analysis on the data using ordinary least squares w
 
 After plotting and fitting an ordinary least squares estimate onto our logged data, our next step was to analyze the distribution of the residuals. In order to accomplish this, we created a Q-Q plot for the residuals. Looking at the QQ-plot its seems as if the distribution of the residuals is not normal since the data doesn't follow the trend of being on the normal in the center and tailing off only towards the end. Since the ordinary least squares model attempts to minimize the L-2 norm of the fitted line and the observed point, it is under the assumption that the noise (residuals) are normally distributed. However, from our QQ plot, we can see that this is not the case, implying that using ordinary least squares regression may not be the best model for our data. 
 
-```{r}
+```{r, echo=F,message=FALSE, warning=FALSE}
 #QQ plot of the residuals 
 qqnorm(df$lm_log_residual, main = "Q-Q Plot of Residuals")
 qqline(df$lm_log_residual, distribution=qnorm)
@@ -148,7 +157,7 @@ qqline(df$lm_log_residual, distribution=qnorm)
 
 Another potential problem that could arise from our data set would be if our data was not reported exactly. Our approach to this was to add some random noise to our original data set, and repeat the same process as above. The noise values we added were each normally distributed; we had three different sets of noise which differed in variance values of .1, .5, and 1 for the density. The resulting scatter plots with fitted estimated is shown below:
 
-```{r}
+```{r, echo=F,message=FALSE, warning=FALSE}
 
 
 ######What if there is measurement error?
@@ -200,7 +209,7 @@ Looking at the scatter plots, it seems that adding noise makes the ordinary leas
 
 Another question we wanted to explore is if the polyethylene blocks were not measured in random order, would this have any effect on our analysis. In order to check this, we plotted the regression line and acquired the residuals for each density one density group at a time. The results are below: 
 
-```{r}
+```{r, echo=F,message=FALSE, warning=FALSE}
 
 #####Look at residuals for each of the 9 densities
 #Make residual plots for each density
@@ -258,7 +267,7 @@ We repeat this by omitting observations that have a  density of  0.01 g/cm^3^. O
 
 We can see from the residual plots that the residual plots are still not normal. 
 
-```{r}
+```{r, echo=F,message=FALSE, warning=FALSE}
 
 ################################################
 # CROSS VALIDATION UPDATED #
@@ -271,7 +280,7 @@ ggplot(df.cv1, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = 
                                                                        se = TRUE)
 
 glm_log2<-glm(density~loggain, data=df.cv1, family=gaussian())
-summary(glm_log2)
+#summary(glm_log2)
 
 # density prediction
 y.hat2 <- 1.298422 - (0.216278 * log(38.6))
@@ -283,7 +292,7 @@ glm_resid_mean2 <- mean(df.cv1$glm_log_residual)
 
 # interval estimate assuming error is normally distributed
 ci2 <- c(y.hat2 - (1.96 * glm_resid_sd2), y.hat2 + (1.96 * glm_resid_sd2))
-ci2
+#ci2
 
 # for prediction without density 0,001
 df.cv2 <- df%>%filter(density != 0.001)
@@ -292,7 +301,7 @@ ggplot(df.cv2, aes(x=density, y=loggain)) + geom_point() + geom_smooth(method = 
                                                                        method.args = list(family = "gaussian"), 
                                                                        se = TRUE)
 glm_log3<-glm(density~loggain, data=df.cv2, family = gaussian())
-summary(glm_log3)
+#summary(glm_log3)
 
 # density prediction
 y.hat3 <- 1.310114 - (0.219395 * log(38.6))
@@ -304,7 +313,7 @@ glm_resid_mean3 <- mean(df.cv2$glm_log_residual)
 
 # interval estimate assuming error is normally distributed
 ci3 <- c(y.hat3 - (1.96 * glm_resid_sd3), y.hat3 + (1.96 * glm_resid_sd3))
-ci3
+#ci3
 
 
 
@@ -323,7 +332,7 @@ grid.arrange(cv_p1, cv_p2)
 Now, we try to fit a polynomial regression to our data to see if it is a better fit. First, we plot the R^2 values to see how as we increase the degree of the polynomial regression, and we see that the R^2 increases rapidly. 
 
 
-```{r}
+```{r, echo=F,message=FALSE, warning=FALSE}
 
 #####Polynomial cross validation
 
@@ -352,7 +361,7 @@ for (d in 1:10){
 We also plot the varying degrees of polynomial regression equations against the data. The R^2 value that we obtain from the OLS equation of density on logged gain is 0.9958.
 The model that we have selected from polynomial regression of degree 2 has an R^2 of 0.9508050. 
 
-```{r}
+```{r, echo=F,message=FALSE, warning=FALSE}
 
 #It seems like two might be the best, but let's compare MSE
 library(caret)
@@ -381,8 +390,6 @@ plot(1:d.max, mse, xlab = "Degree", ylab = "MSE", lwd = 2, col = "blue", pch = 5
 lines(1:d.max, mse, type='l', lwd = 2, col = "blue")
 
 ```
-
-{insert graphs}
 
 We now use Cross Validation to see how the different degrees compare across different models. For each degree starting at 1, we chose to perform a 3 fold cross validation where such that we partition our dataset randomly into three parts and perform polynomial regression on two combinations of partitions at a time, then calculate the mean of the MSE for each of the 3 iterations. We iterate this up to 9 degrees. We see that the first minimum MSE occurs at the 6th degree, then we see that we have another lower MSE at the 8th degree. 
 
