@@ -142,9 +142,9 @@ rm("df3")
 
 
 # Plot of times that are spiked
-spiked_times_p<-ggplot(subset(df2, df2$spike==1), aes(x=time_to_failure)) + geom_histogram()
+spiked_plot<-spiked_times_p<-ggplot(subset(df2, df2$spike==1), aes(x=time_to_failure)) + geom_histogram()
 
 # Plot of times that are not spiked
-unspiked_times_p<-ggplot(subset(df2, df2$spike==0), aes(x=time_to_failure)) + geom_histogram()
+unspiked_plot<-unspiked_times_p<-ggplot(subset(df2, df2$spike==0), aes(x=time_to_failure)) + geom_histogram()
 
-grid
+grid.arrange(spiked_plot, unspiked_plot)
