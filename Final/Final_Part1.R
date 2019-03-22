@@ -3,24 +3,35 @@
 # This file export the first and last 8th of the acoustic_data column to csv's
 
 # Load working directory
-setwd("C:/Users/ADRC/Downloads")
+setwd("C:/Users/ADRC/Documents/MATH 189")
 
 #Load dependencies
-library(dplyr)
-library(ggplot2)
-library(reshape2)
-library(gridExtra)
 library(data.table)
-
-#Load Data
 
 #Load original data File
 df<-fread("train.csv")
+
+#Remove existing CSVs
+file.remove("train_X_1.csv")
+file.remove("train_X_2.csv")
+file.remove("train_X_1.csv")
+file.remove("train_X_2.csv")
+
+# acoustic_data
+#Separate into two parts: First and Last 8th
 df2<-df[1:(nrow(df)/8),1]
 df3<-df[(nrow(df)-nrow(df2)):nrow(df),1]
-rm("df")
-write.csv(df2, file="train_X_1.csv")
+fwrite(df2, "train_X_1.csv")
 rm("df2")
-write.csv(df3, file="train_X_2.csv")
+fwrite(df3, "train_X_2.csv")
 rm("df3")
-#ks.test(df2$acoustic_data, y)
+
+# time_to_failure
+#Separate into two parts: First and Last 8th
+df2<-df[1:(nrow(df)/8),2]
+df3<-df[(nrow(df)-nrow(df2)):nrow(df),2]
+fwrite(df2, "train_Y_1.csv")
+rm("df2")
+fwrite(df3, "train_Y_2.csv")
+rm("df3")
+
